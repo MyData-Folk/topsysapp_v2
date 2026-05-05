@@ -11,6 +11,26 @@ export interface CloudReportMeta {
   upload_date: string
 }
 
+export function generateReportFilename(report: OccupancyData, hotelName: string): string {
+  const sanitize = (s: string) => s.replace(/[^a-zA-Z0-9À-ÿ]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
+  const hotel = sanitize(hotelName) || 'hotel'
+
+  const firstDate = report.dateLabels[0]?.date
+  const lastDate = report.dateLabels[report.daysCount - 1]?.date
+
+  const fmt = (d: Date | null | undefined): string => {
+    if (!d || !(d instanceof Date) || isNaN(d.getTime())) return ''
+    return d.toISOString().split('T')[0]
+  }
+
+  const start = fmt(firstDate)
+  const end = fmt(lastDate)
+
+  if (start && end) return `${hotel}_${start}_${end}.json`
+  const fallback = sanitize(report.periodStr || report.fileName?.replace('.pdf', '') || 'rapport')
+  return `${hotel}_${fallback}.json`
+}
+
 function requireClient() {
   if (!supabase) throw new Error('Supabase non configuré — ajoutez VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY dans .env.local')
   return supabase
@@ -25,7 +45,7 @@ export async function saveReport(report: OccupancyData): Promise<string> {
     .from('user_reports')
     .insert({
       owner_id: user.id,
-      filename: report.fileName || 'rapport',
+      filename: generateReportFilename(report, report.establishmentName || 'hotel'),
       period_str: report.periodStr || '',
       establishment_name: report.establishmentName || '',
       data: report,
