@@ -20,7 +20,11 @@ export function generateReportFilename(report: OccupancyData, hotelName: string)
 
   const fmt = (d: Date | null | undefined): string => {
     if (!d || !(d instanceof Date) || isNaN(d.getTime())) return ''
-    return d.toISOString().split('T')[0]
+    // Use local date parts to avoid UTC offset shifting the date for non-UTC users
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
   }
 
   const start = fmt(firstDate)
