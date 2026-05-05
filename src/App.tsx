@@ -139,6 +139,7 @@ export default function App() {
                     onShowToast={store.showToast}
                     onUpdateHotel={store.updateActiveHotel}
                     onDetectNewHotel={(name, buffer) => setNewHotelPrompt({ name, buffer })}
+                    auth={auth}
                   />
                 </motion.div>
               )}
