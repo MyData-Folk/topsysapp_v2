@@ -18,9 +18,13 @@ function requireClient() {
 
 export async function getMyProfile(): Promise<UserProfile | null> {
   const client = requireClient()
+  const { data: { user } } = await client.auth.getUser()
+  if (!user) return null
+
   const { data, error } = await client
     .from('profiles')
     .select('id, email, role, approved_by, approved_at, created_at')
+    .eq('id', user.id)
     .single()
 
   if (error) {

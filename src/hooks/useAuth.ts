@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import { getMyProfile, UserProfile, UserRole } from '../lib/adminStorage'
@@ -20,6 +20,7 @@ export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const initializedRef = useRef(false)
 
   const loadProfile = async () => {
     if (!supabase) return
@@ -34,23 +35,36 @@ export function useAuth(): AuthState {
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
 
-    supabase.auth.getSession()
-      .then(async ({ data }) => {
-        const u = data.session?.user ?? null
-        setUser(u)
-        if (u) await loadProfile()
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-
+    // onAuthStateChange fires INITIAL_SESSION on mount — use it as the single source
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (u) await loadProfile()
-      else setProfile(null)
+
+      if (u) {
+        await loadProfile()
+      } else {
+        setProfile(null)
+      }
+
+      // Only call setLoading(false) once, on the first event
+      if (!initializedRef.current) {
+        initializedRef.current = true
+        setLoading(false)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    // Safety fallback: if no event fires within 5s, unlock the UI
+    const timeout = setTimeout(() => {
+      if (!initializedRef.current) {
+        initializedRef.current = true
+        setLoading(false)
+      }
+    }, 5000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
