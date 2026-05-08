@@ -165,6 +165,7 @@ export default function App() {
                   <EvolutionTab
                     config={store.config}
                     hotel={store.activeHotel}
+                    auth={auth}
                     onShowToast={store.showToast}
                   />
                 </motion.div>

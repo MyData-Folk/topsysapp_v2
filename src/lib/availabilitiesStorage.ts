@@ -138,3 +138,121 @@ export async function pushAvailabilities(
 
   return snapshotId
 }
+
+// ── Évolution — requêtes pour l'onglet Évolution ─────────────────────────────
+
+export interface DayAvailability {
+  date: string
+  libres_total: number
+  capacite: number
+  prix: number
+  rooms: Record<string, { occupied: number; libres: number }>
+  taux: number
+  occupied_total: number
+}
+
+export interface SnapshotWithDays extends SnapshotMeta {
+  days: DayAvailability[]
+  avgRate: number
+  totalOcc: number
+  totalLibres: number
+}
+
+function enrichDay(row: {
+  date: string; libres_total: number; capacite: number; prix: number;
+  rooms: Record<string, { occupied: number; libres: number }>
+}): DayAvailability {
+  const occupied_total = row.capacite - row.libres_total
+  const taux = row.capacite > 0 ? (occupied_total / row.capacite) * 100 : 0
+  return { ...row, occupied_total, taux }
+}
+
+function aggregateSnap(snap: SnapshotMeta, days: DayAvailability[]): SnapshotWithDays {
+  const totalOcc = days.reduce((s, d) => s + d.occupied_total, 0)
+  const totalLibres = days.reduce((s, d) => s + d.libres_total, 0)
+  const avgRate = days.length > 0
+    ? days.reduce((s, d) => s + d.taux, 0) / days.length
+    : 0
+  return { ...snap, days, avgRate, totalOcc, totalLibres }
+}
+
+/**
+ * Charge tous les snapshots d'un hôtel sur une plage de dates,
+ * triés par date d'édition du rapport (edition_date) puis par import_date.
+ * Chaque snapshot ne contient que les jours dans la plage [dateFrom, dateTo].
+ */
+export async function fetchSnapshotsForEvolution(
+  hotelId: string,
+  dateFrom: string,   // 'YYYY-MM-DD'
+  dateTo: string,     // 'YYYY-MM-DD'
+): Promise<SnapshotWithDays[]> {
+  const client = requireClient()
+
+  // 1. Tous les snapshots de l'hôtel qui couvrent la plage
+  const { data: snaps, error: snapErr } = await client
+    .from('availability_snapshots')
+    .select('id, hotel_id, import_date, edition_date, period_str, filename, days_count, created_by')
+    .eq('hotel_id', hotelId)
+    .order('edition_date', { ascending: true })
+    .order('import_date', { ascending: true })
+
+  if (snapErr) throw new Error(`Erreur chargement snapshots : ${snapErr.message}`)
+  if (!snaps || snaps.length === 0) return []
+
+  const snapIds = snaps.map(s => s.id)
+
+  // 2. Toutes les lignes de disponibilités pour ces snapshots sur la plage
+  const { data: rows, error: rowErr } = await client
+    .from('availabilities')
+    .select('snapshot_id, date, libres_total, capacite, prix, rooms')
+    .in('snapshot_id', snapIds)
+    .gte('date', dateFrom)
+    .lte('date', dateTo)
+    .order('date', { ascending: true })
+
+  if (rowErr) throw new Error(`Erreur chargement disponibilités : ${rowErr.message}`)
+
+  // 3. Grouper les lignes par snapshot_id
+  const bySnap = new Map<string, DayAvailability[]>()
+  for (const row of rows ?? []) {
+    const day = enrichDay(row as any)
+    if (!bySnap.has(row.snapshot_id)) bySnap.set(row.snapshot_id, [])
+    bySnap.get(row.snapshot_id)!.push(day)
+  }
+
+  // 4. Ne garder que les snapshots qui ont des données sur la plage
+  return snaps
+    .filter(s => (bySnap.get(s.id)?.length ?? 0) > 0)
+    .map(s => aggregateSnap(s as SnapshotMeta, bySnap.get(s.id) ?? []))
+}
+
+/**
+ * Pour une date précise, retourne l'évolution des disponibilités
+ * à travers tous les snapshots (un point par snapshot/rapport).
+ */
+export async function fetchDayEvolution(
+  hotelId: string,
+  date: string,  // 'YYYY-MM-DD'
+): Promise<{ snapshot: SnapshotMeta; day: DayAvailability }[]> {
+  const client = requireClient()
+
+  const { data, error } = await client
+    .from('availabilities')
+    .select(`
+      date, libres_total, capacite, prix, rooms,
+      availability_snapshots!inner(
+        id, hotel_id, import_date, edition_date, period_str, filename, days_count, created_by
+      )
+    `)
+    .eq('hotel_id', hotelId)
+    .eq('date', date)
+    .order('availability_snapshots(edition_date)', { ascending: true })
+    .order('availability_snapshots(import_date)', { ascending: true })
+
+  if (error) throw new Error(`Erreur évolution journée : ${error.message}`)
+
+  return (data ?? []).map((row: any) => ({
+    snapshot: row.availability_snapshots as SnapshotMeta,
+    day: enrichDay(row),
+  }))
+}
