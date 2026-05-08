@@ -4,18 +4,18 @@ import { cn } from '../utils/cn';
 
 export function HelpTab() {
   return (
-    <div className="max-w-4xl mx-auto space-y-10 pb-16">
+    <div className="max-w-4xl mx-auto space-y-8 md:space-y-10 pb-16">
       {/* Hero */}
-      <section className="text-center py-12">
-        <div className="w-20 h-20 bg-gold/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-          <span className="text-gold font-serif font-bold text-4xl">T</span>
+      <section className="text-center py-8 md:py-12">
+        <div className="w-16 h-16 md:w-20 md:h-20 bg-gold/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <span className="text-gold font-serif font-bold text-3xl md:text-4xl">T</span>
         </div>
-        <h1 className="font-serif text-3xl font-bold text-text mb-3">Topsys Planification Explorer</h1>
+        <h1 className="font-serif text-2xl md:text-3xl font-bold text-text mb-3">Topsys Planification Explorer</h1>
         <p className="text-text-dim text-sm max-w-xl mx-auto leading-relaxed">
           Outil d'analyse d'occupation hôtelière conçu pour les rapports PDF générés par le logiciel Topsys.
           Importez, analysez, comparez et exportez vos données d'occupation — le tout en local, sans aucun envoi de données.
         </p>
-        <div className="flex items-center justify-center gap-3 mt-6">
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
           <span className="px-3 py-1.5 rounded-lg bg-green/10 text-green text-[10px] font-bold border border-green/20">v2.0</span>
           <span className="px-3 py-1.5 rounded-lg bg-gold/10 text-gold text-[10px] font-bold border border-gold/20">Topsys v8.5 Compatible</span>
           <span className="px-3 py-1.5 rounded-lg bg-blue/10 text-blue text-[10px] font-bold border border-blue/20">Multi-hôtels</span>
@@ -84,7 +84,7 @@ export function HelpTab() {
       </section>
 
       {/* How to use */}
-      <section className="bg-surf1 border border-border rounded-2xl p-8">
+      <section className="bg-surf1 border border-border rounded-2xl p-5 md:p-8">
         <h2 className="font-serif text-xl font-bold text-text mb-6">Guide de démarrage rapide</h2>
         <div className="space-y-6">
           <Step number={1} title="Configurer votre hôtel">
@@ -111,7 +111,7 @@ export function HelpTab() {
       </section>
 
       {/* Tips */}
-      <section className="bg-surf1 border border-border rounded-2xl p-8">
+      <section className="bg-surf1 border border-border rounded-2xl p-5 md:p-8">
         <h2 className="font-serif text-xl font-bold text-text mb-6">Astuces</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Tip title="Thème clair / sombre" icon={<span className="flex gap-1"><Moon size={12} /><Sun size={12} /></span>}>
