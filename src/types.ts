@@ -41,6 +41,7 @@ export interface HotelConfig {
   types: RoomType[];
   defaultRoomPrice: number;
   ignorePrefixes: string[];
+  supabaseRegistered?: boolean;
 }
 
 export type ThemeMode = 'dark' | 'light';

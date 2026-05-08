@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, RotateCcw, Wand2, Download, FileUp, CheckCircle2, Bed, LayoutDashboard, Filter, FolderOpen, Moon, Sun, Sparkles, Cloud } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Wand2, Download, FileUp, CheckCircle2, Bed, LayoutDashboard, Filter, FolderOpen, Moon, Sun, Sparkles, Cloud, DatabaseZap } from 'lucide-react';
 import { AuthState } from '../hooks/useAuth';
 import { saveConfig, loadCloudConfig } from '../lib/supabaseStorage';
+import { registerHotel } from '../lib/availabilitiesStorage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppConfig, HotelConfig, RoomType, ThemeMode } from '../types';
 import { DEFAULT_CONFIG, DEFAULT_TYPES, DEFAULT_IGNORE_PREFIXES } from '../utils/constants';
@@ -26,6 +27,7 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
   const [saveFlash, setSaveFlash] = useState(false);
   const [savingCloud, setSavingCloud] = useState(false)
   const [loadingCloud, setLoadingCloud] = useState(false)
+  const [registeringHotel, setRegisteringHotel] = useState(false)
 
   const save = (updates: Partial<AppConfig>) => {
     onConfigChange({ ...config, ...updates });
@@ -128,6 +130,19 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
       onShowToast(e instanceof Error ? e.message : 'Erreur inconnue', 'error')
     } finally {
       setSavingCloud(false)
+    }
+  }
+
+  const handleRegisterHotel = async () => {
+    setRegisteringHotel(true)
+    try {
+      await registerHotel(activeHotel)
+      onUpdateHotel({ supabaseRegistered: true })
+      onShowToast(`Hôtel "${activeHotel.name}" enregistré dans Supabase`)
+    } catch (e) {
+      onShowToast(e instanceof Error ? e.message : 'Erreur inconnue', 'error')
+    } finally {
+      setRegisteringHotel(false)
     }
   }
 
@@ -378,6 +393,55 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
               </button>
             </div>
           </div>
+
+          {/* Supabase disponibilités */}
+          {auth.user && (
+            <div className="bg-surf1 p-6 rounded-2xl border border-border">
+              <div className="flex items-center gap-2 text-gold font-serif text-lg mb-4">
+                <DatabaseZap size={20} /> Disponibilités Supabase
+              </div>
+              <p className="text-[11px] text-text-dark mb-4">
+                Enregistrez cet hôtel et sa typologie dans Supabase pour pouvoir y pousser des disponibilités depuis l'onglet Analyse.
+              </p>
+              <div className="flex items-center justify-between p-3 bg-surf2 rounded-xl border border-border">
+                <div>
+                  <div className="text-xs font-bold text-text">{activeHotel.name}</div>
+                  <div className="text-[10px] text-text-dark">{activeHotel.types.length} type{activeHotel.types.length > 1 ? 's' : ''} · {activeHotel.totalCapacity} chambres</div>
+                </div>
+                {activeHotel.supabaseRegistered ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green/10 border border-green/20 rounded-lg text-[11px] font-bold text-green">
+                    <CheckCircle2 size={12} /> Enregistré
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleRegisterHotel}
+                    disabled={registeringHotel || activeHotel.types.length === 0}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gold text-bg rounded-lg text-[11px] font-bold hover:bg-gold-light transition-all disabled:opacity-50"
+                  >
+                    {registeringHotel
+                      ? <div className="w-3 h-3 border-2 border-bg border-t-transparent rounded-full animate-spin" />
+                      : <DatabaseZap size={12} />}
+                    Enregistrer dans Supabase
+                  </button>
+                )}
+              </div>
+              {activeHotel.supabaseRegistered && (
+                <button
+                  onClick={handleRegisterHotel}
+                  disabled={registeringHotel}
+                  className="mt-3 w-full flex items-center justify-center gap-1.5 p-2 bg-surf2 border border-border rounded-xl text-[10px] font-bold text-text-dark hover:border-gold/30 hover:text-gold transition-all disabled:opacity-50"
+                >
+                  {registeringHotel
+                    ? <div className="w-3 h-3 border border-text-dark border-t-transparent rounded-full animate-spin" />
+                    : <RotateCcw size={11} />}
+                  Resynchroniser la typologie
+                </button>
+              )}
+              {activeHotel.types.length === 0 && (
+                <p className="text-[10px] text-amber mt-2">Ajoutez au moins un type de chambre avant d'enregistrer.</p>
+              )}
+            </div>
+          )}
 
           {/* Room types */}
           <div className="bg-surf1 p-6 rounded-2xl border border-border">

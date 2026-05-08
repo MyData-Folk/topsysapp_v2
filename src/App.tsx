@@ -152,6 +152,7 @@ export default function App() {
                     hotel={store.activeHotel}
                     filters={store.filters}
                     pdfFile={store.activeReport ? store.pdfFiles[store.activeReport.id] || null : null}
+                    auth={auth}
                     onFiltersChange={store.setFilters}
                     onResetFilters={store.resetFilters}
                     onShowToast={store.showToast}

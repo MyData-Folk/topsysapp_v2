@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { OccupancyData, AppConfig, HotelConfig, FilterState } from '../types';
 import { useFilteredData } from '../hooks/useFilteredData';
@@ -11,6 +11,8 @@ import { Charts } from './Charts';
 import { OccupancyTable } from './OccupancyTable';
 import { DayInspector } from './DayInspector';
 import { PdfViewer } from './PdfViewer';
+import { pushAvailabilities, listSnapshots, SnapshotMeta } from '../lib/availabilitiesStorage';
+import { AuthState } from '../hooks/useAuth';
 
 interface AnalyseTabProps {
   report: OccupancyData | null;
@@ -18,15 +20,53 @@ interface AnalyseTabProps {
   hotel: HotelConfig;
   filters: FilterState;
   pdfFile: File | null;
+  auth: AuthState;
   onFiltersChange: (f: FilterState) => void;
   onResetFilters: () => void;
   onShowToast: (msg: string, type?: 'ok' | 'error') => void;
 }
 
-export function AnalyseTab({ report, config, hotel, filters, pdfFile, onFiltersChange, onResetFilters, onShowToast }: AnalyseTabProps) {
+export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFiltersChange, onResetFilters, onShowToast }: AnalyseTabProps) {
   const [selectedDayIdx, setSelectedDayIdx] = useState<number | null>(null);
   const [tableFontSize, setTableFontSize] = useState(11);
   const [viewingPdf, setViewingPdf] = useState(false);
+  const [pushing, setPushing] = useState(false);
+  const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([]);
+  const [loadingSnaps, setLoadingSnaps] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const canPush = auth.user && hotel.supabaseRegistered && report !== null;
+
+  const fetchSnapshots = useCallback(async () => {
+    if (!auth.user || !hotel.supabaseRegistered) return;
+    setLoadingSnaps(true);
+    try {
+      const list = await listSnapshots(hotel.id);
+      setSnapshots(list);
+    } catch (e) {
+      onShowToast(e instanceof Error ? e.message : 'Erreur chargement historique', 'error');
+    } finally {
+      setLoadingSnaps(false);
+    }
+  }, [auth.user, hotel.id, hotel.supabaseRegistered]);
+
+  useEffect(() => {
+    if (showHistory) fetchSnapshots();
+  }, [showHistory, fetchSnapshots]);
+
+  const handlePush = async () => {
+    if (!report) return;
+    setPushing(true);
+    try {
+      const snapshotId = await pushAvailabilities(report, hotel);
+      onShowToast(`Disponibilités publiées (snapshot ${snapshotId.slice(0, 8)}…)`);
+      if (showHistory) fetchSnapshots();
+    } catch (e) {
+      onShowToast(e instanceof Error ? e.message : 'Erreur publication', 'error');
+    } finally {
+      setPushing(false);
+    }
+  };
 
   const { visibleCols, kpis } = useFilteredData(report, filters, config, hotel);
 
@@ -133,6 +173,82 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, onFiltersC
                 <FileText size={14} /> EXPORTER JSON
               </button>
             </div>
+
+            {/* Supabase publish */}
+            {auth.user && (
+              <div className="bg-surf1 border border-border rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-gold font-serif text-sm font-bold">
+                    <DatabaseZap size={16} /> Disponibilités Supabase
+                  </div>
+                  {hotel.supabaseRegistered && (
+                    <button
+                      onClick={() => setShowHistory(v => !v)}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-surf2 border border-border rounded-lg text-[10px] font-bold text-text-dark hover:border-gold/30 hover:text-gold transition-all"
+                    >
+                      <History size={12} /> Historique
+                    </button>
+                  )}
+                </div>
+
+                {!hotel.supabaseRegistered ? (
+                  <p className="text-[11px] text-amber">
+                    Cet hôtel n'est pas encore enregistré dans Supabase.
+                    Allez dans <strong>Paramètres</strong> → section <em>Disponibilités Supabase</em> pour l'activer.
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-surf2 rounded-xl border border-border">
+                    <div className="text-xs">
+                      <div className="font-bold text-text">{report.periodStr}</div>
+                      <div className="text-text-dark">{report.daysCount} jours · édité le {report.editionDate || '—'}</div>
+                    </div>
+                    <button
+                      onClick={handlePush}
+                      disabled={pushing}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-gold text-bg font-bold rounded-xl text-xs hover:bg-gold-light transition-all disabled:opacity-50"
+                    >
+                      {pushing
+                        ? <div className="w-3 h-3 border-2 border-bg border-t-transparent rounded-full animate-spin" />
+                        : <DatabaseZap size={13} />}
+                      Publier les disponibilités
+                    </button>
+                  </div>
+                )}
+
+                {/* Historique snapshots */}
+                {showHistory && hotel.supabaseRegistered && (
+                  <div className="border-t border-border pt-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Snapshots précédents</span>
+                      <button onClick={fetchSnapshots} disabled={loadingSnaps} className="p-1 text-text-dark hover:text-gold transition-colors disabled:opacity-50">
+                        <RefreshCw size={12} className={loadingSnaps ? 'animate-spin' : ''} />
+                      </button>
+                    </div>
+                    {loadingSnaps ? (
+                      <div className="flex justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : snapshots.length === 0 ? (
+                      <p className="text-xs text-text-dim text-center py-3">Aucun snapshot pour cet hôtel.</p>
+                    ) : (
+                      <div className="space-y-1.5 max-h-[240px] overflow-y-auto custom-scrollbar">
+                        {snapshots.map(s => (
+                          <div key={s.id} className="flex items-center justify-between p-2.5 bg-surf2 rounded-lg border border-transparent hover:border-border-hover text-xs">
+                            <div>
+                              <div className="font-bold text-text">{s.period_str || s.filename || '—'}</div>
+                              <div className="text-text-dark text-[10px]">
+                                Édité le {s.edition_date || '—'} · Importé le {new Date(s.import_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-text-dark">{s.days_count}j</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Charts */}
             <Charts report={report} config={config} hotel={hotel} visibleCols={visibleCols} />
