@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { OccupancyData, AppConfig, HotelConfig, FilterState } from '../types';
 import { useFilteredData } from '../hooks/useFilteredData';
@@ -29,6 +29,11 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, onFiltersC
   const [viewingPdf, setViewingPdf] = useState(false);
 
   const { visibleCols, kpis } = useFilteredData(report, filters, config, hotel);
+
+  const invalidDays = useMemo(() => {
+    if (!report) return [];
+    return report.dateLabels.filter((_, i) => report.validation[i] === false);
+  }, [report]);
 
   if (!report) {
     return (
@@ -74,6 +79,19 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, onFiltersC
 
       {/* Main content */}
       <div className="flex-1 min-w-0 space-y-6">
+        {/* Validation warning banner */}
+        {invalidDays.length > 0 && (
+          <div className="flex items-start gap-3 p-4 bg-amber/10 border border-amber/30 rounded-2xl text-amber text-xs">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold">Données incohérentes détectées — </span>
+              {invalidDays.length} jour{invalidDays.length > 1 ? 's' : ''} où la somme des libres par type ne correspond pas au total PDF :{' '}
+              <span className="font-mono">{invalidDays.map(d => d.day).join(', ')}</span>.
+              Consultez la ligne <em>∑ libres/type</em> dans le tableau pour le détail.
+            </div>
+          </div>
+        )}
+
         {/* Report info banner */}
         {report.establishmentName && (
           <div className="flex flex-col gap-3 p-4 bg-gold/5 border border-gold/10 rounded-2xl md:flex-row md:items-center md:justify-between">

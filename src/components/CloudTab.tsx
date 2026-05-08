@@ -15,7 +15,7 @@ import {
 interface CloudTabProps {
   auth: AuthState
   activeReport: OccupancyData | null
-  onAddReport: (r: OccupancyData) => void
+  onAddReport: (r: OccupancyData) => boolean
   onShowToast: (msg: string, type?: 'ok' | 'error') => void
 }
 
@@ -62,7 +62,8 @@ export function CloudTab({ auth, activeReport, onAddReport, onShowToast }: Cloud
     setActionLoading(id)
     try {
       const data = await downloadReport(id)
-      onAddReport(data)
+      const added = onAddReport(data)
+      if (!added) { onShowToast('Ce rapport est déjà chargé', 'error'); return; }
       onShowToast('Rapport importé depuis le cloud')
     } catch (e) {
       onShowToast(e instanceof Error ? e.message : 'Erreur inconnue', 'error')

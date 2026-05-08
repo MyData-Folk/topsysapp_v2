@@ -97,8 +97,14 @@ export function useAppStore() {
             setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }))
           }
         })
-        .catch(() => { /* erreur réseau silencieuse au démarrage */ })
-    }).catch(() => { /* erreur auth silencieuse */ })
+        .catch((e: unknown) => {
+          console.warn('[cloud] Échec chargement config:', e instanceof Error ? e.message : e)
+          setError('Synchronisation cloud indisponible au démarrage')
+          setTimeout(() => setError(null), 5000)
+        })
+    }).catch((e: unknown) => {
+      console.warn('[cloud] Échec auth au démarrage:', e instanceof Error ? e.message : e)
+    })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist config to localStorage
@@ -131,9 +137,19 @@ export function useAppStore() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const addReport = useCallback((report: OccupancyData) => {
-    setReports(prev => [report, ...prev]);
-    setSelectedReportId(report.id);
+  const addReport = useCallback((report: OccupancyData): boolean => {
+    let duplicate = false;
+    setReports(prev => {
+      duplicate = prev.some(r =>
+        r.periodStr === report.periodStr &&
+        r.establishmentName === report.establishmentName &&
+        r.daysCount === report.daysCount
+      );
+      if (duplicate) return prev;
+      return [report, ...prev];
+    });
+    if (!duplicate) setSelectedReportId(report.id);
+    return !duplicate;
   }, []);
 
   const deleteReport = useCallback((id: string) => {

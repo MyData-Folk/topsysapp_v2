@@ -4,6 +4,7 @@ import { OccupancyData, AppConfig, HotelConfig } from '../types';
 import { parseTopsysPdf, detectEstablishmentName } from '../lib/pdfParser';
 import { cn } from '../utils/cn';
 import { hydrateReport } from '../utils/helpers';
+import { DEFAULT_HOTEL } from '../utils/constants';
 import { AuthState } from '../hooks/useAuth';
 import { listReports, downloadReport, generateReportFilename, CloudReportMeta } from '../lib/supabaseStorage';
 
@@ -14,7 +15,7 @@ interface ImportTabProps {
   selectedReportId: string | null;
   isLoading: boolean;
   error: string | null;
-  onAddReport: (r: OccupancyData) => void;
+  onAddReport: (r: OccupancyData) => boolean;
   onDeleteReport: (id: string) => void;
   onSelectReport: (id: string) => void;
   onStorePdf: (id: string, file: File) => void;
@@ -65,7 +66,11 @@ export function ImportTab({
     setImportingId(meta.id)
     try {
       const data = await downloadReport(meta.id)
-      onAddReport(data)
+      const added = onAddReport(data)
+      if (!added) {
+        onShowToast('Ce rapport est déjà chargé', 'error')
+        return
+      }
       setPreviewReport(null)
       onSwitchToAnalyse()
       onShowToast('Rapport importé depuis le cloud')
@@ -84,7 +89,8 @@ export function ImportTab({
         const text = await file.text();
         const data = JSON.parse(text) as OccupancyData;
         if (!data.id || !data.dateLabels) throw new Error("JSON invalide");
-        onAddReport(hydrateReport(data));
+        const added = onAddReport(hydrateReport(data));
+        if (!added) { onShowToast('Ce rapport est déjà chargé', 'error'); return; }
         onSwitchToAnalyse();
         onShowToast('Rapport JSON importé');
         return;
@@ -109,10 +115,14 @@ export function ImportTab({
 
       const result = await parseTopsysPdf(buffer.slice(0), hotelToUse, config);
       result.fileName = file.name;
+      const added = onAddReport(result);
+      if (!added) {
+        onShowToast('Ce rapport est déjà chargé', 'error');
+        return;
+      }
       onStorePdf(result.id, file);
-      onAddReport(result);
 
-      if (result.establishmentName && activeHotel.name === 'Folkestone Opera') {
+      if (result.establishmentName && activeHotel.name === DEFAULT_HOTEL.name) {
         onUpdateHotel({ name: result.establishmentName, address: result.establishmentAddress || activeHotel.address });
       }
 
