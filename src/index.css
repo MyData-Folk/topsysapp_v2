@@ -62,6 +62,13 @@
   body {
     @apply bg-bg text-text antialiased;
   }
+
+  @media (max-width: 767px) {
+    html,
+    body {
+      overflow-x: hidden;
+    }
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
