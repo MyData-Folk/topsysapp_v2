@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
-import { getMyProfile, UserProfile, UserRole } from '../lib/adminStorage'
+import { UserProfile, UserRole } from '../lib/adminStorage'
 
 export interface AuthState {
   user: User | null
@@ -16,44 +16,73 @@ export interface AuthState {
   refreshProfile: () => Promise<void>
 }
 
+// Load profile by user ID directly — no extra getUser() round-trip
+async function fetchProfileById(userId: string): Promise<UserProfile | null> {
+  if (!supabase) return null
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, email, role, approved_by, approved_at, created_at')
+      .eq('id', userId)
+      .single()
+    if (error) return null
+    return data as UserProfile
+  } catch {
+    return null
+  }
+}
+
+// After signup the DB trigger may not have run yet — retry up to 3x
+async function fetchProfileWithRetry(userId: string, maxRetries = 3): Promise<UserProfile | null> {
+  for (let i = 0; i < maxRetries; i++) {
+    const profile = await fetchProfileById(userId)
+    if (profile) return profile
+    if (i < maxRetries - 1) await new Promise(r => setTimeout(r, 800))
+  }
+  return null
+}
+
 export function useAuth(): AuthState {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser]       = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
-  const initializedRef = useRef(false)
+  const initializedRef        = useRef(false)
 
-  const loadProfile = async () => {
-    if (!supabase) return
-    try {
-      const p = await getMyProfile()
-      setProfile(p)
-    } catch {
-      setProfile(null)
-    }
+  const loadProfile = async (userId?: string) => {
+    const id = userId ?? user?.id
+    if (!id || !supabase) { setProfile(null); return }
+    const p = await fetchProfileById(id)
+    setProfile(p)
   }
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
 
-    // onAuthStateChange fires INITIAL_SESSION on mount — use it as the single source
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const u = session?.user ?? null
       setUser(u)
 
       if (u) {
-        await loadProfile()
+        if (event === 'SIGNED_IN') {
+          // On login, profile may not exist yet for brand-new accounts — retry
+          const p = await fetchProfileWithRetry(u.id)
+          setProfile(p)
+        } else {
+          // INITIAL_SESSION / TOKEN_REFRESHED: profile already exists, single query
+          const p = await fetchProfileById(u.id)
+          setProfile(p)
+        }
       } else {
         setProfile(null)
       }
 
-      // Only call setLoading(false) once, on the first event
       if (!initializedRef.current) {
         initializedRef.current = true
         setLoading(false)
       }
     })
 
-    // Safety fallback: if no event fires within 5s, unlock the UI
+    // Safety: unlock UI after 5s if no auth event fires
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
         initializedRef.current = true
@@ -68,13 +97,13 @@ export function useAuth(): AuthState {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) throw new Error('Supabase non configuré — ajoutez les variables dans .env.local')
+    if (!supabase) throw new Error('Supabase non configuré')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error(error.message)
   }
 
   const signUp = async (email: string, password: string) => {
-    if (!supabase) throw new Error('Supabase non configuré — ajoutez les variables dans .env.local')
+    if (!supabase) throw new Error('Supabase non configuré')
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) throw new Error(error.message)
   }
@@ -85,9 +114,13 @@ export function useAuth(): AuthState {
     if (error) throw new Error(error.message)
   }
 
-  const role = profile?.role ?? null
+  const role       = profile?.role ?? null
   const isApproved = role === 'user' || role === 'admin'
-  const isAdmin = role === 'admin'
+  const isAdmin    = role === 'admin'
 
-  return { user, profile, role, isApproved, isAdmin, loading, signIn, signUp, signOut, refreshProfile: loadProfile }
+  return {
+    user, profile, role, isApproved, isAdmin, loading,
+    signIn, signUp, signOut,
+    refreshProfile: () => loadProfile(),
+  }
 }
