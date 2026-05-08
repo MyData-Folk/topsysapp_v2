@@ -116,8 +116,14 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   // 3. Variation jour par jour entre le premier et le dernier snapshot
   const deltaChart = useMemo(() => {
     if (snapshots.length < 2) return [];
-    const first = snapshots[0];
-    const last = snapshots[snapshots.length - 1];
+    // Utilise les snapshots avec des données d'occupation réelles (capacite > 0)
+    const validSnaps = snapshots.filter(s =>
+      (s.days as DayAvailability[]).some(d => d.capacite > 0 && d.libres_total < d.capacite)
+    );
+    const list = validSnaps.length >= 2 ? validSnaps : snapshots;
+    const first = list[0];
+    const last = list[list.length - 1];
+    if (first.id === last.id) return [];
     const dates = Array.from(
       new Set([...first.days.map(d => d.date), ...last.days.map(d => d.date)])
     ).sort();
@@ -140,29 +146,59 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }[];
   }, [snapshots]);
 
+  // Détecte si un snapshot a des données de rooms valides pour au moins un type
+  const hasRoomsData = useCallback((s: SnapshotWithDays) =>
+    (s.days as DayAvailability[]).some(d =>
+      d.rooms && Object.keys(d.rooms).length > 0 &&
+      Object.values(d.rooms).some(r => r.occupied > 0 || r.libres > 0)
+    ),
+  []);
+
   // 4. Évolution par type de chambre (tableau)
   const typeEvolution = useMemo(() => {
     if (snapshots.length === 0) return [];
     return hotel.types.map(type => {
       const bySnap = snapshots.map(s => {
-        const totalOcc = s.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
-        const totalCap = type.capacity * s.days.length;
-        const rate = totalCap > 0 ? (totalOcc / totalCap) * 100 : 0;
-        return { snapshotLabel: snapLabel(s), rate: Math.round(rate * 10) / 10 };
+        const days = s.days as DayAvailability[];
+        const hasRooms = days.some(d => d.rooms[type.code] != null);
+        const totalOcc = days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+        const totalCap = type.capacity * days.length;
+        const rate = (hasRooms && totalCap > 0) ? (totalOcc / totalCap) * 100 : null;
+        return {
+          snapshotLabel: snapLabel(s),
+          rate: rate != null ? Math.round(rate * 10) / 10 : null,
+          incomplete: !hasRooms,
+        };
       });
-      const hasData = bySnap.some(b => b.rate > 0);
-      if (!hasData) return null;
-      const first = bySnap[0].rate;
-      const last = bySnap[bySnap.length - 1].rate;
-      return { type: type.label, code: type.code, bySnap, diff: last - first };
-    }).filter(Boolean) as { type: string; code: string; bySnap: { snapshotLabel: string; rate: number }[]; diff: number }[];
+      const validRates = bySnap.filter(b => b.rate != null);
+      if (validRates.length === 0) return null;
+      // Tendance : premier snapshot valide → dernier snapshot valide
+      const firstValid = validRates[0].rate!;
+      const lastValid = validRates[validRates.length - 1].rate!;
+      return {
+        type: type.label,
+        code: type.code,
+        bySnap,
+        diff: lastValid - firstValid,
+      };
+    }).filter(Boolean) as {
+      type: string;
+      code: string;
+      bySnap: { snapshotLabel: string; rate: number | null; incomplete: boolean }[];
+      diff: number;
+    }[];
   }, [snapshots, hotel.types]);
 
-  // 5. KPIs de variation entre premier et dernier snapshot
+  // 5. KPIs — utilise les snapshots avec données valides (taux > 0 ou libres < capacite)
   const kpis = useMemo(() => {
     if (snapshots.length < 2) return null;
-    const first = snapshots[0];
-    const last = snapshots[snapshots.length - 1];
+    const valid = snapshots.filter(s =>
+      (s.days as DayAvailability[]).some(d => d.capacite > 0 && d.libres_total < d.capacite)
+    );
+    // Fallback sur toute la liste si aucun valide détecté
+    const list = valid.length >= 2 ? valid : snapshots;
+    const first = list[0];
+    const last = list[list.length - 1];
     return {
       rateDiff: last.avgRate - first.avgRate,
       occDiff: last.totalOcc - first.totalOcc,
@@ -174,7 +210,8 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       firstLabel: snapLabel(first),
       lastLabel: snapLabel(last),
       snapshotsCount: snapshots.length,
-      daysCount: snapshots[0].days.length,
+      validCount: list.length,
+      daysCount: first.days.length,
     };
   }, [snapshots]);
 
@@ -439,21 +476,33 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
           {/* Évolution par type de chambre */}
           {typeEvolution.length > 0 && (
             <div className="bg-surf1 border border-border p-5 rounded-2xl overflow-x-auto custom-scrollbar">
-              <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest mb-5">
-                Évolution par type de chambre
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-5">
+                <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest">
+                  Évolution par type de chambre
+                </h3>
+                {snapshots.some(s => !hasRoomsData(s)) && (
+                  <div className="flex items-center gap-1.5 text-[10px] text-amber shrink-0">
+                    <AlertTriangle size={11} />
+                    Les colonnes marquées <strong>⚠</strong> n'ont pas de données par type — snapshot incomplet.
+                  </div>
+                )}
+              </div>
               <table className="w-full text-xs min-w-[500px]">
                 <thead>
                   <tr className="border-b border-border text-text-dark">
                     <th className="text-left p-3 font-bold uppercase text-[10px]">Type</th>
-                    {snapshots.map((s, i) => (
-                      <th key={s.id} className="p-3 text-center font-bold text-[10px]">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                          <span className="truncate max-w-[100px]">{snapLabel(s)}</span>
-                        </div>
-                      </th>
-                    ))}
+                    {snapshots.map((s, i) => {
+                      const incomplete = !hasRoomsData(s);
+                      return (
+                        <th key={s.id} className={cn("p-3 text-center font-bold text-[10px]", incomplete && "opacity-50")}>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                            <span className="truncate max-w-[100px]">{snapLabel(s)}</span>
+                            {incomplete && <span className="text-amber" title="Snapshot sans données de rooms">⚠</span>}
+                          </div>
+                        </th>
+                      );
+                    })}
                     <th className="p-3 text-center font-bold text-[10px]">Tendance</th>
                   </tr>
                 </thead>
@@ -462,7 +511,9 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                     <tr key={te.code} className="border-b border-border/50 hover:bg-surf2/50">
                       <td className="p-3 font-bold text-text">{te.type}</td>
                       {te.bySnap.map((b, i) => (
-                        <td key={i} className="p-3 text-center font-mono text-text-dim">{b.rate.toFixed(1)}%</td>
+                        <td key={i} className={cn("p-3 text-center font-mono", b.incomplete ? "text-text-dark/30" : "text-text-dim")}>
+                          {b.rate != null ? `${b.rate.toFixed(1)}%` : '—'}
+                        </td>
                       ))}
                       <td className="p-3 text-center">
                         <span className={cn(
