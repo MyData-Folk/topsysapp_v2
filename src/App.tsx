@@ -14,6 +14,7 @@ import { AnalyseTab } from './components/AnalyseTab';
 import { EvolutionTab } from './components/EvolutionTab';
 import { SettingsTab } from './components/SettingsTab';
 import { HelpTab } from './components/HelpTab';
+import { AdminTab } from './components/AdminTab';
 import { HotelWizard } from './components/HotelWizard';
 import { Toast } from './components/Toast';
 import { LoginScreen } from './components/LoginScreen';
@@ -91,13 +92,14 @@ export default function App() {
 
   return (
     <>
-      {/* Auth gate — shown instead of app when user is not logged in and has not skipped */}
+      {/* Auth gate — not logged in */}
       {!auth.loading && !auth.user && !skipAuth && (
-        <LoginScreen
-          auth={auth}
-          onSkip={() => setSkipAuth(true)}
-          supabaseAvailable={supabase !== null}
-        />
+        <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
+      )}
+
+      {/* Pending gate — logged in but not yet approved */}
+      {!auth.loading && auth.user && !auth.isApproved && !skipAuth && (
+        <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
       )}
 
       {/* Loading spinner while auth resolves */}
@@ -107,8 +109,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Main app — shown when logged in or skip selected */}
-      {!auth.loading && (auth.user || skipAuth) && (
+      {/* Main app — shown when approved or skipped */}
+      {!auth.loading && (auth.isApproved || skipAuth) && (
         <div className="flex flex-col min-h-screen bg-bg font-sans selection:bg-gold/30">
           <Header
             hotel={store.activeHotel}
@@ -116,7 +118,7 @@ export default function App() {
             theme={store.config.theme}
             onThemeChange={t => store.setConfig({ ...store.config, theme: t })}
           />
-          <TabNav activeTab={store.activeTab} onTabChange={store.setActiveTab} isCloudConnected={!!auth.user} />
+          <TabNav activeTab={store.activeTab} onTabChange={store.setActiveTab} isCloudConnected={!!auth.user} isAdmin={auth.isAdmin} />
 
           <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
             <AnimatePresence mode="wait">
@@ -204,10 +206,16 @@ export default function App() {
                   />
                 </motion.div>
               )}
+
+              {store.activeTab === 'admin' && auth.isAdmin && (
+                <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                  <AdminTab auth={auth} onShowToast={store.showToast} />
+                </motion.div>
+              )}
             </AnimatePresence>
           </main>
 
-          <TabNavMobile activeTab={store.activeTab} onTabChange={store.setActiveTab} isCloudConnected={!!auth.user} />
+          <TabNavMobile activeTab={store.activeTab} onTabChange={store.setActiveTab} isCloudConnected={!!auth.user} isAdmin={auth.isAdmin} />
 
           {/* Hotel wizard */}
           {showWizard && (

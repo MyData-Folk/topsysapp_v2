@@ -64,7 +64,7 @@ export interface AppConfig {
 }
 
 export type ViewMode = 'all' | 'libres' | 'occupees' | 'taux';
-export type TabId = 'import' | 'analyse' | 'evolution' | 'settings' | 'help' | 'cloud';
+export type TabId = 'import' | 'analyse' | 'evolution' | 'settings' | 'help' | 'cloud' | 'admin';
 
 export interface FilterState {
   view: ViewMode;

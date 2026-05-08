@@ -1,9 +1,9 @@
-import { FileUp, LayoutDashboard, Settings, GitCompareArrows, HelpCircle, Cloud } from 'lucide-react';
+import { FileUp, LayoutDashboard, Settings, GitCompareArrows, HelpCircle, Cloud, ShieldCheck } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { TabId } from '../types';
 import { cn } from '../utils/cn';
 
-const TABS: { id: TabId; label: string; shortLabel: string; icon: ComponentType<{ size?: number }> }[] = [
+const BASE_TABS: { id: TabId; label: string; shortLabel: string; icon: ComponentType<{ size?: number }> }[] = [
   { id: 'import', label: 'Importer', shortLabel: 'Import', icon: FileUp },
   { id: 'analyse', label: 'Analyse & KPIs', shortLabel: 'Analyse', icon: LayoutDashboard },
   { id: 'evolution', label: 'Évolution', shortLabel: 'Évol.', icon: GitCompareArrows },
@@ -12,24 +12,26 @@ const TABS: { id: TabId; label: string; shortLabel: string; icon: ComponentType<
   { id: 'cloud', label: 'Cloud', shortLabel: 'Cloud', icon: Cloud },
 ];
 
+const ADMIN_TAB = { id: 'admin' as TabId, label: 'Admin', shortLabel: 'Admin', icon: ShieldCheck };
+
 interface TabNavProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   isCloudConnected?: boolean;
+  isAdmin?: boolean;
 }
 
-export function TabNav({ activeTab, onTabChange, isCloudConnected }: TabNavProps) {
+export function TabNav({ activeTab, onTabChange, isCloudConnected, isAdmin }: TabNavProps) {
+  const tabs = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
   return (
     <nav className="hidden md:flex px-8 border-b border-border bg-surf1 h-12 shrink-0 sticky top-0 z-50">
-      {TABS.map(tab => (
-        <button
-          key={tab.id}
-          onClick={() => onTabChange(tab.id)}
+      {tabs.map(tab => (
+        <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={cn(
             "flex items-center gap-2 px-5 border-b-2 text-xs font-semibold transition-all h-full outline-none",
-            activeTab === tab.id
-              ? "border-gold text-gold"
-              : "border-transparent text-text-dim hover:text-text hover:border-border-hover"
+            activeTab === tab.id ? "border-gold text-gold" : "border-transparent text-text-dim hover:text-text hover:border-border-hover",
+            tab.id === 'admin' && "text-green hover:text-green border-transparent hover:border-green/40",
+            tab.id === 'admin' && activeTab === 'admin' && "border-green text-green",
           )}
         >
           <div className="relative">
@@ -45,21 +47,19 @@ export function TabNav({ activeTab, onTabChange, isCloudConnected }: TabNavProps
   );
 }
 
-export function TabNavMobile({ activeTab, onTabChange, isCloudConnected }: TabNavProps) {
+export function TabNavMobile({ activeTab, onTabChange, isCloudConnected, isAdmin }: TabNavProps) {
+  const tabs = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
+  const cols = tabs.length;
   return (
     <nav className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surf1/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-      <div className="grid h-16 grid-cols-6 px-1">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => onTabChange(tab.id)}
-            aria-label={tab.label}
-            aria-current={activeTab === tab.id ? 'page' : undefined}
+      <div className={`grid h-16 px-1`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+        {tabs.map(tab => (
+          <button key={tab.id} type="button" onClick={() => onTabChange(tab.id)}
+            aria-label={tab.label} aria-current={activeTab === tab.id ? 'page' : undefined}
             className={cn(
               "min-h-11 rounded-xl px-1 text-[9px] font-bold transition-all flex flex-col items-center justify-center gap-1",
               activeTab === tab.id
-                ? "text-gold bg-gold/10"
+                ? tab.id === 'admin' ? "text-green bg-green/10" : "text-gold bg-gold/10"
                 : "text-text-dark hover:text-text"
             )}
           >

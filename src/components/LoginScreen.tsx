@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Lock, Cloud, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Cloud, AlertCircle, Clock } from 'lucide-react'
 import { AuthState } from '../hooks/useAuth'
 
 interface LoginScreenProps {
@@ -15,6 +15,7 @@ export function LoginScreen({ auth, onSkip, supabaseAvailable }: LoginScreenProp
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [signedUp, setSignedUp] = useState(false)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -25,8 +26,8 @@ export function LoginScreen({ auth, onSkip, supabaseAvailable }: LoginScreenProp
         await auth.signIn(email, password)
       } else {
         await auth.signUp(email, password)
+        setSignedUp(true)
       }
-      // auth.user will become non-null via onAuthStateChange → App.tsx re-renders → LoginScreen disappears
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
@@ -58,8 +59,32 @@ export function LoginScreen({ auth, onSkip, supabaseAvailable }: LoginScreenProp
           </div>
         )}
 
-        {/* Form (only when Supabase is available) */}
-        {supabaseAvailable && (
+        {/* Pending approval — shown after signup or when user is logged in but pending */}
+        {(signedUp || (auth.user && auth.profile?.role === 'pending')) && (
+          <div className="bg-surf1 border border-amber/30 rounded-3xl p-8 text-center space-y-4">
+            <div className="w-16 h-16 bg-amber/10 rounded-full flex items-center justify-center mx-auto">
+              <Clock size={28} className="text-amber" />
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-text mb-2">Compte en attente</h3>
+              <p className="text-sm text-text-dim leading-relaxed">
+                Votre demande d'accès a bien été enregistrée. Un administrateur doit approuver votre compte avant que vous puissiez vous connecter.
+              </p>
+            </div>
+            <p className="text-xs text-text-dark">
+              {signedUp ? `Compte créé pour ${email}.` : `Connecté en tant que ${auth.user?.email}.`}
+            </p>
+            {auth.user && (
+              <button onClick={() => auth.signOut()}
+                className="text-xs text-text-dim hover:text-text transition-colors underline">
+                Se déconnecter
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Form (only when Supabase is available and not pending) */}
+        {supabaseAvailable && !signedUp && auth.profile?.role !== 'pending' && (
           <div className="bg-surf1 border border-border rounded-3xl p-8 space-y-5">
             {/* Mode toggle */}
             <div className="flex p-1 bg-surf2 rounded-xl border border-border gap-1">
@@ -132,14 +157,13 @@ export function LoginScreen({ auth, onSkip, supabaseAvailable }: LoginScreenProp
         )}
 
         {/* Skip button */}
-        <div className="text-center">
-          <button
-            onClick={onSkip}
-            className="text-sm text-text-dim hover:text-text transition-colors"
-          >
-            Continuer sans compte →
-          </button>
-        </div>
+        {!signedUp && auth.profile?.role !== 'pending' && (
+          <div className="text-center">
+            <button onClick={onSkip} className="text-sm text-text-dim hover:text-text transition-colors">
+              Continuer sans compte →
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   )
