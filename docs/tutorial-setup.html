@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guide — Reprendre le projet sur un nouveau poste</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surf1: #1a1d27;
+      --surf2: #22263a;
+      --surf3: #2a2f47;
+      --gold: #d4b162;
+      --gold-light: #e8cc80;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --text: #f0f0f4;
+      --text-dim: #9ba3c0;
+      --border: #2e3350;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+
+    .hero { background: linear-gradient(135deg, var(--surf1), var(--surf2)); border-bottom: 1px solid var(--border); padding: 48px 24px; text-align: center; }
+    .hero h1 { font-size: 2rem; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+    .hero p { color: var(--text-dim); max-width: 600px; margin: 0 auto; }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid; text-transform: uppercase; letter-spacing: .05em; }
+    .badge-gold { background: rgba(212,177,98,.1); color: var(--gold); border-color: rgba(212,177,98,.3); }
+    .badge-blue { background: rgba(96,165,250,.1); color: var(--blue); border-color: rgba(96,165,250,.3); }
+    .badge-green { background: rgba(52,211,153,.1); color: var(--green); border-color: rgba(52,211,153,.3); }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+    .toc { background: var(--surf1); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 40px; }
+    .toc h2 { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 16px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 6px; }
+    .toc a { color: var(--gold); text-decoration: none; font-size: 14px; }
+    .toc a:hover { text-decoration: underline; }
+
+    .phase { margin-bottom: 48px; }
+    .phase-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .phase-num { width: 40px; height: 40px; border-radius: 12px; background: rgba(212,177,98,.15); color: var(--gold); font-size: 18px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .phase-title { font-size: 1.3rem; font-weight: 700; }
+    .phase-sub { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+
+    .step { background: var(--surf1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+    .step-title { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .step-title .icon { font-size: 18px; }
+    .step p, .step li { font-size: 14px; color: var(--text-dim); }
+    .step ul, .step ol { padding-left: 20px; margin-top: 6px; }
+    .step li { margin-bottom: 4px; }
+
+    pre { background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+    code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+    pre code { color: var(--gold-light); }
+    .inline-code { background: var(--surf2); color: var(--gold-light); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+
+    .warning { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); border-radius: 10px; padding: 14px 16px; margin: 12px 0; font-size: 13px; color: var(--amber); }
+    .info { background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.25); border-radius: 10px; padding: 14px 16px; margin: 12px 0; font-size: 13px; color: var(--blue); }
+    .success { background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.25); border-radius: 10px; padding: 14px 16px; margin: 12px 0; font-size: 13px; color: var(--green); }
+
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 16px 0; }
+    .tool-card { background: var(--surf2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .tool-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .tool-card .url { font-size: 12px; color: var(--blue); margin-bottom: 10px; }
+    .tool-card p { font-size: 13px; color: var(--text-dim); }
+
+    .env-block { background: var(--surf2); border-left: 3px solid var(--gold); border-radius: 0 10px 10px 0; padding: 16px; margin: 12px 0; font-family: monospace; font-size: 13px; }
+    .env-block .key { color: var(--blue); }
+    .env-block .val { color: var(--green); }
+
+    h2 { scroll-margin-top: 20px; }
+    .separator { height: 1px; background: var(--border); margin: 40px 0; }
+    footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 24px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🚀 Reprendre le projet sur un nouveau poste</h1>
+  <p>Guide complet pour configurer VS Code, Claude Code, GitHub et reprendre le développement de TopsysExplorer v2 depuis zéro.</p>
+  <div class="badges">
+    <span class="badge badge-gold">VS Code</span>
+    <span class="badge badge-blue">Claude Code</span>
+    <span class="badge badge-green">GitHub</span>
+    <span class="badge badge-gold">Node.js 20+</span>
+    <span class="badge badge-blue">Supabase</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="toc">
+    <h2>📋 Sommaire</h2>
+    <ol>
+      <li><a href="#phase1">Installer les outils de base (Node, Git, VS Code)</a></li>
+      <li><a href="#phase2">Configurer Claude Code</a></li>
+      <li><a href="#phase3">Cloner le dépôt et installer les dépendances</a></li>
+      <li><a href="#phase4">Configurer les variables d'environnement</a></li>
+      <li><a href="#phase5">Lancer le serveur de développement</a></li>
+      <li><a href="#phase6">Workflow GitHub — commit, push, PR</a></li>
+      <li><a href="#phase7">Déployer sur Coolify</a></li>
+      <li><a href="#phase8">Reprendre une session Claude Code</a></li>
+    </ol>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="phase" id="phase1">
+    <div class="phase-header">
+      <div class="phase-num">1</div>
+      <div>
+        <div class="phase-title">Installer les outils de base</div>
+        <div class="phase-sub">Node.js, Git, VS Code — à faire une seule fois par poste</div>
+      </div>
+    </div>
+
+    <div class="tool-grid">
+      <div class="tool-card">
+        <h3>🟢 Node.js 20+</h3>
+        <div class="url">nodejs.org/en/download</div>
+        <p>Choisir la version LTS. Inclut npm. Vérifier : <span class="inline-code">node -v</span></p>
+      </div>
+      <div class="tool-card">
+        <h3>🐙 Git</h3>
+        <div class="url">git-scm.com/downloads</div>
+        <p>Inclus sur Mac/Linux. Sur Windows : Git for Windows. Vérifier : <span class="inline-code">git --version</span></p>
+      </div>
+      <div class="tool-card">
+        <h3>💙 VS Code</h3>
+        <div class="url">code.visualstudio.com</div>
+        <p>Éditeur principal. Extensions recommandées : ESLint, Tailwind CSS IntelliSense, GitLens.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">⚙️</span> Configurer Git identité</div>
+      <pre><code>git config --global user.name "Votre Nom"
+git config --global user.email "votre@email.com"</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🔑</span> Connecter GitHub via SSH (recommandé)</div>
+      <pre><code># Générer une clé SSH
+ssh-keygen -t ed25519 -C "votre@email.com"
+
+# Afficher la clé publique à copier dans GitHub
+cat ~/.ssh/id_ed25519.pub</code></pre>
+      <p>Ensuite dans GitHub → Settings → SSH and GPG keys → New SSH key → coller la clé.</p>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="phase" id="phase2">
+    <div class="phase-header">
+      <div class="phase-num">2</div>
+      <div>
+        <div class="phase-title">Configurer Claude Code</div>
+        <div class="phase-sub">L'assistant IA qui connaît déjà tout le contexte du projet</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">📦</span> Installer Claude Code</div>
+      <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🔐</span> Authentifier Claude Code</div>
+      <pre><code>claude</code></pre>
+      <p>La première fois, Claude Code ouvre le navigateur pour se connecter à votre compte Anthropic (claude.ai). Suivez les instructions à l'écran.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">💡</span> Extension VS Code Claude Code</div>
+      <p>Dans VS Code → Extensions (Ctrl+Shift+X) → chercher <span class="inline-code">Claude Code</span> → Installer.<br>
+      Ou depuis la palette de commandes : <span class="inline-code">Ctrl+Shift+P</span> → <em>Claude Code: Open</em>.</p>
+    </div>
+
+    <div class="info">
+      💡 Claude Code lit automatiquement le fichier <span class="inline-code">CLAUDE.md</span> à la racine du projet et charge la mémoire persistante dans <span class="inline-code">~/.claude/projects/</span>. Il retrouve tout le contexte de la session précédente automatiquement.
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="phase" id="phase3">
+    <div class="phase-header">
+      <div class="phase-num">3</div>
+      <div>
+        <div class="phase-title">Cloner le dépôt</div>
+        <div class="phase-sub">Récupérer le code source depuis GitHub</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">📂</span> Cloner topsysapp_v2</div>
+      <pre><code># Choisir un dossier de travail, ex: Documents/projets
+cd ~/Documents
+
+# Cloner le dépôt de travail (pas TopsysExplorer original)
+git clone https://github.com/MyData-Folk/topsysapp_v2.git
+
+cd topsysapp_v2</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">📦</span> Installer les dépendances</div>
+      <pre><code>npm install</code></pre>
+      <p>Installe React 19, Vite 6, Supabase, Tailwind CSS 4, Recharts, pdfjs-dist, etc.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🔍</span> Vérifier l'état du dépôt</div>
+      <pre><code>git log --oneline -5   # Voir les derniers commits
+git status             # Vérifier qu'on est sur main propre
+git remote -v          # Vérifier les remotes</code></pre>
+    </div>
+
+    <div class="warning">
+      ⚠️ Le dépôt original est <code>TopsysExplorer</code> (lecture seule). Le dépôt de travail actif est <code>topsysapp_v2</code>. Toujours travailler sur ce dernier.
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div class="phase" id="phase4">
+    <div class="phase-header">
+      <div class="phase-num">4</div>
+      <div>
+        <div class="phase-title">Variables d'environnement</div>
+        <div class="phase-sub">Connecter l'app à Supabase en local</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">📝</span> Créer le fichier <code>.env.local</code></div>
+      <p>À la racine du projet, créer un fichier <span class="inline-code">.env.local</span> (non commité, dans le .gitignore) :</p>
+      <div class="env-block">
+        <div><span class="key">VITE_SUPABASE_URL</span>=<span class="val">https://uzhbrjtjzmiijovjcfsu.supabase.co</span></div>
+        <div><span class="key">VITE_SUPABASE_ANON_KEY</span>=<span class="val">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6aGJyanRqem1paWpvdmpjZnN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MzE2MTIsImV4cCI6MjA5MzUwNzYxMn0.3_U7vKHXjJ26xtcoxQb8gc_Zy1LyA1LX7Mv0yxqMDyI</span></div>
+      </div>
+      <div class="warning">⚠️ Utiliser la clé <strong>legacy JWT</strong> ci-dessus. La Publishable Key (<code>sb_publishable_...</code>) ne transmet pas le JWT pour le RLS Supabase et bloque la connexion.</div>
+    </div>
+  </div>
+
+  <!-- PHASE 5 -->
+  <div class="phase" id="phase5">
+    <div class="phase-header">
+      <div class="phase-num">5</div>
+      <div>
+        <div class="phase-title">Lancer le serveur de développement</div>
+        <div class="phase-sub">Hot-reload sur http://localhost:3000</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🚀</span> Démarrer Vite</div>
+      <pre><code>npm run dev</code></pre>
+      <p>L'app s'ouvre sur <strong>http://localhost:3000</strong> (ou 3001 si 3000 est occupé).</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🔧</span> Autres commandes utiles</div>
+      <pre><code>npm run lint      # TypeScript type check (tsc --noEmit)
+npm run build     # Build production → dossier dist/
+npm run preview   # Tester le build de production localement</code></pre>
+    </div>
+
+    <div class="success">
+      ✅ Si l'écran de connexion Topsys Explorer apparaît → tout est configuré correctement.
+    </div>
+  </div>
+
+  <!-- PHASE 6 -->
+  <div class="phase" id="phase6">
+    <div class="phase-header">
+      <div class="phase-num">6</div>
+      <div>
+        <div class="phase-title">Workflow GitHub</div>
+        <div class="phase-sub">Branches, commits, push, pull requests</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🌿</span> Créer une branche de fonctionnalité</div>
+      <pre><code># Toujours partir de main à jour
+git checkout main
+git pull
+
+# Créer une nouvelle branche
+git checkout -b feat/ma-nouvelle-feature</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">💾</span> Committer son travail</div>
+      <pre><code>git add src/components/MonComposant.tsx
+git commit -m "feat(composant): description de la fonctionnalité"</code></pre>
+      <p>Convention de commits : <span class="inline-code">feat:</span> nouvelle fonctionnalité, <span class="inline-code">fix:</span> correction, <span class="inline-code">chore:</span> maintenance.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">⬆️</span> Pousser et créer une PR</div>
+      <pre><code>git push topsysapp_v2 feat/ma-nouvelle-feature
+
+# Créer la PR via GitHub CLI
+gh pr create --repo MyData-Folk/topsysapp_v2 \
+  --base main \
+  --title "feat: description" \
+  --body "Description des changements"</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🔀</span> Merger sur main</div>
+      <pre><code># Une fois la PR validée, merger localement
+git checkout main
+git merge feat/ma-nouvelle-feature
+git push topsysapp_v2 main</code></pre>
+    </div>
+  </div>
+
+  <!-- PHASE 7 -->
+  <div class="phase" id="phase7">
+    <div class="phase-header">
+      <div class="phase-num">7</div>
+      <div>
+        <div class="phase-title">Déployer sur Coolify</div>
+        <div class="phase-sub">Un seul curl pour déployer en production</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🚀</span> Déclencher un déploiement</div>
+      <pre><code>curl -X GET \
+  -H "Authorization: Bearer 10|A5aHnspRcUffsxuJ3xgg2JlTAz8uHhEze3f6fGMp38005ff4" \
+  "http://72.60.190.114:8000/api/v1/deploy?uuid=ch08tju2h1kl0zhb5nzi2opp&force=false"</code></pre>
+      <p>L'URL de production est : <a href="https://topsysexplorer.hotelmanager.fr" style="color:var(--blue)">https://topsysexplorer.hotelmanager.fr</a></p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🔄</span> Force rebuild (après changement de config)</div>
+      <pre><code>curl -X GET \
+  -H "Authorization: Bearer 10|A5aHnspRcUffsxuJ3xgg2JlTAz8uHhEze3f6fGMp38005ff4" \
+  "http://72.60.190.114:8000/api/v1/deploy?uuid=ch08tju2h1kl0zhb5nzi2opp&force=true"</code></pre>
+      <div class="warning">⚠️ Après tout changement de domaine dans l'UI Coolify, toujours utiliser <code>force=true</code> pour régénérer les labels Traefik.</div>
+    </div>
+  </div>
+
+  <!-- PHASE 8 -->
+  <div class="phase" id="phase8">
+    <div class="phase-header">
+      <div class="phase-num">8</div>
+      <div>
+        <div class="phase-title">Reprendre une session Claude Code</div>
+        <div class="phase-sub">Comment briefer Claude pour qu'il retrouve tout le contexte</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">📂</span> Ouvrir le projet dans VS Code</div>
+      <pre><code>cd ~/Documents/topsysapp_v2
+code .</code></pre>
+      <p>VS Code avec l'extension Claude Code charge automatiquement le contexte du projet.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">💬</span> Phrase de reprise recommandée</div>
+      <p>Dans Claude Code, commencer par :</p>
+      <div class="env-block" style="font-family: inherit; color: var(--text);">
+        "Consulte ta mémoire et analyse l'application. Nous travaillons sur TopsysExplorer v2 (repo topsysapp_v2). Voici ce que je veux faire aujourd'hui : [description]"
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">🧠</span> Ce que Claude retrouve automatiquement</div>
+      <ul>
+        <li>Infos Coolify (URL, token, UUID app) via la mémoire persistante</li>
+        <li>Infos Supabase (URL, clé JWT) via la mémoire persistante</li>
+        <li>Architecture du projet via <span class="inline-code">CLAUDE.md</span></li>
+        <li>Contexte code via les fichiers source du projet</li>
+        <li>Historique des décisions via <span class="inline-code">git log</span></li>
+      </ul>
+    </div>
+
+    <div class="step">
+      <div class="step-title"><span class="icon">📋</span> Fichier de contexte à donner à Claude</div>
+      <p>Voir <span class="inline-code">NEXT_SESSION.md</span> à la racine du projet — il contient l'état exact du projet, les fonctionnalités implémentées, les bugs connus et les prochaines étapes.</p>
+    </div>
+
+    <div class="success">
+      ✅ Claude Code charge la mémoire persistante depuis <code>~/.claude/projects/</code> — les tokens, URLs et décisions architecturales sont déjà là, pas besoin de les re-saisir.
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  TopsysExplorer v2 — MyData-Folk/topsysapp_v2 — 2026
+</footer>
+
+</body>
+</html>
