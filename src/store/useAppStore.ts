@@ -101,14 +101,23 @@ export function useAppStore() {
     const timeout = setTimeout(() => {
       supabase.auth.getUser().then(({ data }) => {
         if (data.user) {
-          logger.info('Store', 'Sauvegarde auto de la config vers le Cloud...');
-          saveConfig(config).catch(err => logger.error('Store', 'Erreur sauvegarde Cloud config', err));
+          // Injection des filtres dans le JSON de config pour sauvegarde
+          const fullConfig = { 
+            ...config, 
+            lastFilters: {
+              ...filters,
+              types: Array.from(filters.types),
+              dows: Array.from(filters.dows)
+            }
+          };
+          logger.info('Store', 'Sauvegarde auto de la config et des filtres vers le Cloud...');
+          saveConfig(fullConfig as any).catch(err => logger.error('Store', 'Erreur sauvegarde Cloud config', err));
         }
       });
     }, 2000); // Debounce de 2s
 
     return () => clearTimeout(timeout);
-  }, [config]);
+  }, [config, filters]);
 
   // Persist reports to IndexedDB
   useEffect(() => {
@@ -177,12 +186,19 @@ export function useAppStore() {
   }, []);
 
   const addHotel = useCallback((hotel: HotelConfig) => {
-    logger.info('Store', `Ajout hôtel: ${hotel.name}`);
-    setConfig(prev => ({
-      ...prev,
-      hotels: [...prev.hotels, hotel],
-      selectedHotelId: hotel.id,
-    }));
+    setConfig(prev => {
+      const exists = prev.hotels.find(h => h.name.toLowerCase() === hotel.name.toLowerCase());
+      if (exists) {
+        logger.warn('Store', `Hôtel déjà présent: ${hotel.name}`);
+        return { ...prev, selectedHotelId: exists.id };
+      }
+      logger.info('Store', `Ajout hôtel: ${hotel.name}`);
+      return {
+        ...prev,
+        hotels: [...prev.hotels, hotel],
+        selectedHotelId: hotel.id,
+      };
+    });
   }, []);
 
   const deleteHotel = useCallback((id: string) => {
