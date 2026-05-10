@@ -23,6 +23,7 @@ import { logger } from './utils/logger';
 import { loadCloudConfig, listReports, downloadReport } from './lib/supabaseStorage';
 import { DEFAULT_CONFIG } from './utils/constants';
 import { LogPanel } from './components/LogPanel';
+import { cn } from './utils/cn';
 
 export default function App() {
   const store = useAppStore();
