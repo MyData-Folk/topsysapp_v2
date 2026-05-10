@@ -20,6 +20,8 @@ import { Toast } from './components/Toast';
 import { LoginScreen } from './components/LoginScreen';
 import { supabase } from './lib/supabaseClient';
 import { logger } from './utils/logger';
+import { loadCloudConfig } from './lib/supabaseStorage';
+import { DEFAULT_CONFIG } from './utils/constants';
 
 export default function App() {
   const store = useAppStore();
@@ -38,6 +40,19 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', store.config.theme);
   }, [store.config.theme]);
+
+  // Chargement de la config Cloud lors de la connexion
+  useEffect(() => {
+    if (auth.user && store.config.cloudSync) {
+      logger.info('App', 'Utilisateur connecté, chargement de la config Cloud...');
+      loadCloudConfig().then(cloudConfig => {
+        if (cloudConfig) {
+          logger.info('App', 'Configuration Cloud appliquée avec succès');
+          store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }));
+        }
+      }).catch(err => logger.error('App', 'Erreur chargement Cloud config post-login', err));
+    }
+  }, [auth.user]); // Se déclenche quand auth.user change
 
   const handleNewHotelConfirm = async () => {
     if (!newHotelPrompt) return;
