@@ -224,8 +224,9 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
                     <div className="text-[9px] text-text-dark truncate">{h.address || '-'}</div>
                   </div>
                   {config.hotels.length > 1 && (
-                    <button onClick={e => { e.stopPropagation(); onDeleteHotel(h.id); }} className="p-1 text-text-dark hover:text-red opacity-0 group-hover:opacity-100">
-                      <Trash2 size={12} />
+                    <button onClick={e => { e.stopPropagation(); onDeleteHotel(h.id); }} 
+                      className="p-2 text-text-dark hover:text-red md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <Trash2 size={14} />
                     </button>
                   )}
                 </div>

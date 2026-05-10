@@ -66,29 +66,33 @@ export default function App() {
           }
         }
       }).catch(err => logger.error('App', 'Erreur Cloud Config', err));
+    }
+  }, [auth.user]);
 
-      // Chargement des rapports Cloud (Synchronisation)
+  // Synchronisation des rapports Cloud (uniquement après hydratation locale)
+  useEffect(() => {
+    if (auth.user && store.isHydrated) {
       listReports().then(async (cloudMetas) => {
         if (cloudMetas.length > 0) {
-          logger.info('App', `${cloudMetas.length} rapports détectés sur le Cloud. Vérification des manquants...`);
+          logger.info('App', `${cloudMetas.length} rapports détectés sur le Cloud. Vérification...`);
+          let syncedCount = 0;
           for (const meta of cloudMetas) {
-            // On vérifie si on l'a déjà en local (par nom et période)
             const exists = store.reports.some(r => r.periodStr === meta.period_str && r.establishmentName === meta.establishment_name);
             if (!exists) {
               try {
-                logger.debug('App', `Téléchargement du rapport manquant: ${meta.filename}`);
                 const data = await downloadReport(meta.id);
                 store.addReport(data);
+                syncedCount++;
               } catch (e) {
                 logger.error('App', `Erreur sync rapport ${meta.id}`, e);
               }
             }
           }
-          logger.info('App', 'Synchronisation des rapports terminée');
+          if (syncedCount > 0) logger.info('App', `${syncedCount} rapports synchronisés depuis le Cloud`);
         }
       }).catch(err => logger.error('App', 'Erreur Sync Rapports', err));
     }
-  }, [auth.user]);
+  }, [auth.user, store.isHydrated]);
 
   const handleNewHotelConfirm = async () => {
     if (!newHotelPrompt) return;
