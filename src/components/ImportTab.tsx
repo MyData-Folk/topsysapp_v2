@@ -43,8 +43,19 @@ export function ImportTab({
   const [previewReport, setPreviewReport] = useState<CloudReportMeta | null>(null)
   const [importingId, setImportingId] = useState<string | null>(null)
 
+  // Stable refs so handleFile never needs to be recreated when config/hotel change
+  const configRef = React.useRef(config)
+  const activeHotelRef = React.useRef(activeHotel)
+  React.useEffect(() => { configRef.current = config }, [config])
+  React.useEffect(() => { activeHotelRef.current = activeHotel }, [activeHotel])
+
+  // Guard to prevent duplicate fetchCloudReports calls when auth.user fires multiple times
+  const fetchingCloudRef = React.useRef(false)
+
   const fetchCloudReports = useCallback(async () => {
     if (!auth.user) return
+    if (fetchingCloudRef.current) return // already in flight
+    fetchingCloudRef.current = true
     setLoadingCloud(true)
     setCloudError(null)
     try {
@@ -54,6 +65,7 @@ export function ImportTab({
       setCloudError(e instanceof Error ? e.message : 'Erreur inconnue')
     } finally {
       setLoadingCloud(false)
+      fetchingCloudRef.current = false
     }
   }, [auth.user])
 
@@ -82,6 +94,10 @@ export function ImportTab({
   }
 
   const handleFile = useCallback(async (file: File) => {
+    // Read current values from stable refs (avoids recreating this callback on every config change)
+    const config = configRef.current;
+    const activeHotel = activeHotelRef.current;
+
     onSetLoading(true);
     onSetError(null);
     try {
@@ -135,7 +151,7 @@ export function ImportTab({
     } finally {
       onSetLoading(false);
     }
-  }, [config, activeHotel]);
+  }, []); // stable — reads live values via refs
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
