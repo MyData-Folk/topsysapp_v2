@@ -85,35 +85,10 @@ export default function App() {
     }
   }, [auth.user]);
 
-  // Synchronisation des rapports Cloud (uniquement après hydratation locale)
+  // La synchronisation automatique est désactivée pour laisser le choix à l'utilisateur (Mode manuel via ImportTab)
   useEffect(() => {
     if (auth.user && store.isHydrated) {
-      listReports().then(async (cloudMetas) => {
-        if (cloudMetas.length > 0) {
-          logger.info('App', `${cloudMetas.length} rapports détectés sur le Cloud. Vérification...`);
-          let syncedCount = 0;
-          // On garde une trace locale des rapports qu'on est en train d'ajouter pour éviter les doublons
-          const alreadyAdding = new Set<string>();
-
-          for (const meta of cloudMetas) {
-            const signature = `${meta.period_str}-${meta.establishment_name}`;
-            const existsLocally = store.reports.some(r => r.periodStr === meta.period_str && r.establishmentName === meta.establishment_name);
-            
-            if (!existsLocally && !alreadyAdding.has(signature)) {
-              alreadyAdding.add(signature);
-              try {
-                const data = await downloadReport(meta.id);
-                store.addReport(data);
-                syncedCount++;
-              } catch (e) {
-                logger.error('App', `Erreur sync rapport ${meta.id}`, e);
-              }
-            }
-          }
-          if (syncedCount > 0) logger.info('App', `${syncedCount} rapports synchronisés depuis le Cloud`);
-          else logger.info('App', 'Tous les rapports Cloud sont déjà présents en local');
-        }
-      }).catch(err => logger.error('App', 'Erreur Sync Rapports', err));
+      logger.info('App', 'Session active - Les rapports Cloud sont disponibles dans l\'onglet Import');
     }
   }, [auth.user, store.isHydrated]);
 
@@ -176,50 +151,68 @@ export default function App() {
     }
   };
 
-  return (
-    <>
-      {/* Auth gate — not logged in */}
-      {!auth.loading && !auth.user && !skipAuth && (
-        <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
-      )}
+    const handleRefresh = async () => {
+      logger.info('App', 'Rafraîchissement global demandé...');
+      // 1. Rafraîchir les données locales (IDB)
+      await store.refreshData();
+      
+      // 2. Vérifier/Rafraîchir la session Supabase
+      if (auth.user) {
+        try {
+          const { data: { user }, error } = await supabase.auth.getUser();
+          if (error || !user) {
+            logger.warn('App', 'Session expirée détectée lors du rafraîchissement');
+            auth.signOut();
+          } else {
+            await auth.refreshProfile();
+            logger.info('App', 'Session Cloud confirmée et profil rafraîchi');
+          }
+        } catch (e) {
+          logger.error('App', 'Erreur vérification session', e);
+          // Si erreur réseau grave, on ne déconnecte pas forcément, mais on prévient
+          store.showToast('Erreur de connexion cloud', 'error');
+        }
+      }
+    };
 
-      {/* Initial loading spinner while auth resolves */}
-      {auth.loading && (
-        <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-6">
-          <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-xs text-text-dim animate-pulse">Initialisation de la session...</p>
-            {/* Bouton de secours pour les admins en cas de freeze */}
-            {auth.user && (
-              <button 
-                onClick={() => {
-                  // On simule un admin pour forcer l'affichage si ça bloque
-                  const el = document.getElementById('force-log-panel');
-                  if (el) el.click();
-                }}
-                className="mt-8 px-4 py-2 bg-surf2 border border-border rounded-xl text-[10px] font-bold text-text-dark hover:text-gold transition-all"
-              >
-                DIAGNOSTIC (FORCE)
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+    return (
+      <div className={cn("min-h-screen", store.config.theme === 'dark' ? "dark" : "")}>
+        <AnimatePresence mode="wait">
+          {/* Auth gate — not logged in */}
+          {!auth.loading && !auth.user && !skipAuth && !auth.isVisitor && (
+            <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
+          )}
 
-      {/* Main app — shown when approved or skipped (or just logged in if profile is slow) */}
-      {!auth.loading && (auth.isApproved || skipAuth || (auth.user && auth.profile === null)) && (
-        <div className="flex flex-col min-h-screen bg-bg font-sans selection:bg-gold/30">
-          <Header
-            hotels={store.config.hotels}
-            selectedHotelId={store.selectedHotelId}
-            onHotelChange={store.setSelectedHotelId}
-            report={store.activeReport}
-            theme={store.config.theme}
-            onThemeChange={t => store.updateConfig({ theme: t })}
-            onRefresh={store.refreshData}
-            auth={auth}
-            isLoading={store.isLoading}
-          />
+          {/* Initial loading spinner while auth resolves */}
+          {auth.loading && (
+            <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-6">
+              <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xs text-text-dim animate-pulse">Initialisation de la session...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Main app — shown when approved, skipped, or visitor (pending) */}
+          {!auth.loading && (auth.isApproved || skipAuth || auth.isVisitor || (auth.user && auth.profile === null)) && (
+            <motion.div 
+              key="app"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col min-h-screen bg-bg font-sans selection:bg-gold/30"
+            >
+              <Header
+                hotels={store.config.hotels}
+                selectedHotelId={store.selectedHotelId}
+                onHotelChange={store.setSelectedHotelId}
+                report={store.activeReport}
+                theme={store.config.theme}
+                onThemeChange={t => store.updateConfig({ theme: t })}
+                onRefresh={handleRefresh}
+                auth={auth}
+                isLoading={store.isLoading}
+              />
           <TabNav activeTab={store.activeTab} onTabChange={store.setActiveTab} isCloudConnected={!!auth.user} isAdmin={auth.isAdmin} />
 
           <main className="flex-1 p-4 pb-24 md:p-8 md:pb-8">
