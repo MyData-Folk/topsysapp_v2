@@ -1,0 +1,187 @@
+[2026-05-10T06:42:10.002Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:10.004Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T06:42:10.028Z] [INFO] [Store] 5 rapports chargés depuis IndexedDB
+---
+[2026-05-10T06:42:10.028Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:10.029Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:10.184Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T06:42:10.185Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 1)
+---
+[2026-05-10T06:42:10.185Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:10.187Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T06:42:13.007Z] [WARN] [Auth] Timeout d'initialisation (3s)
+---
+[2026-05-10T06:42:13.007Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:13.028Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T06:42:15.193Z] [WARN] [App] Chargement Cloud trop long, continuation avec local
+---
+[2026-05-10T06:42:21.737Z] [INFO] [Import] Début traitement fichier: PLANIFICATION 2 05 AU 01 06.pdf
+DATA: {
+  "size": 18517,
+  "type": "application/pdf"
+}
+---
+[2026-05-10T06:42:21.737Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:22.004Z] [INFO] [Store] Rapport ajouté: d6ef001a-62cf-4983-b589-4562de92f9e8
+---
+[2026-05-10T06:42:22.005Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T06:42:25.020Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T06:42:26.637Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:26.967Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T06:42:29.272Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T06:42:29.281Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T06:42:32.067Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:42:32.391Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T06:42:34.311Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T06:42:34.327Z] [INFO] [Store] Auto-sélection hôtel: VENDOME OPERA
+---
+[2026-05-10T06:42:34.327Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T06:42:39.574Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "evolution"
+}
+---
+[2026-05-10T06:42:40.744Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T06:42:48.355Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T06:42:48.667Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T06:42:53.800Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T06:42:56.804Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "cloud"
+}
