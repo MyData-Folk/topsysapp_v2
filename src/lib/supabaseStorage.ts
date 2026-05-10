@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { OccupancyData, AppConfig } from '../types'
 import { hydrateReport } from '../utils/helpers'
+import { logger } from '../utils/logger'
 
 export interface CloudReportMeta {
   id: string
@@ -45,6 +46,7 @@ export async function saveReport(report: OccupancyData): Promise<string> {
   const { data: { user } } = await client.auth.getUser()
   if (!user) throw new Error('Non connecté')
 
+  logger.info('Storage', `Tentative sauvegarde rapport: ${report.id}`);
   const { data, error } = await client
     .from('user_reports')
     .insert({
@@ -57,19 +59,28 @@ export async function saveReport(report: OccupancyData): Promise<string> {
     .select('id')
     .single()
 
-  if (error) throw new Error(`Erreur sauvegarde : ${error.message}`)
+  if (error) {
+    logger.error('Storage', `Échec sauvegarde user_reports: ${error.message}`, error);
+    throw new Error(`Erreur sauvegarde : ${error.message}`)
+  }
+  logger.info('Storage', 'Sauvegarde réussie');
   if (!data) throw new Error('Erreur sauvegarde : aucune donnée retournée')
   return data.id
 }
 
 export async function listReports(): Promise<CloudReportMeta[]> {
   const client = requireClient()
+  logger.info('Storage', 'Récupération de la liste des rapports...');
   const { data, error } = await client
     .from('user_reports')
     .select('id, owner_id, filename, period_str, establishment_name, upload_date')
     .order('upload_date', { ascending: false })
 
-  if (error) throw new Error(`Erreur listage : ${error.message}`)
+  if (error) {
+    logger.error('Storage', `Échec listage user_reports: ${error.message}`, error);
+    throw new Error(`Erreur listage : ${error.message}`)
+  }
+  logger.info('Storage', `${data?.length || 0} rapports trouvés`);
   return (data ?? []) as CloudReportMeta[]
 }
 
