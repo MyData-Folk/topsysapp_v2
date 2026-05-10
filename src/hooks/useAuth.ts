@@ -82,13 +82,13 @@ export function useAuth(): AuthState {
       }
     })
 
-    // Safety: unlock UI after 5s if no auth event fires
+    // Safety: unlock UI after 3s if no auth event fires (offline / slow Supabase)
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
         initializedRef.current = true
         setLoading(false)
       }
-    }, 5000)
+    }, 3000)
 
     return () => {
       subscription.unsubscribe()
