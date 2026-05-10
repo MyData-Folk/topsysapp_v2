@@ -1,0 +1,494 @@
+[2026-05-10T04:11:42.928Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:11:42.933Z] [INFO] [undefined] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T04:11:42.952Z] [DEBUG] [undefined] IndexedDB vide
+---
+[2026-05-10T04:11:42.965Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T04:11:42.965Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 1)
+---
+[2026-05-10T04:11:42.966Z] [INFO] [undefined] Initialisation terminée
+---
+[2026-05-10T04:11:42.968Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:11:42.991Z] [INFO] [undefined] Événement: INITIAL_SESSION
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T04:11:42.991Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 2)
+---
+[2026-05-10T04:11:42.991Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:11:43.302Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T04:11:43.302Z] [DEBUG] [undefined] Fetch profil 1 ignoré (périmé)
+---
+[2026-05-10T04:11:43.350Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T04:11:43.350Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:11:51.171Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T04:11:51.171Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 3)
+---
+[2026-05-10T04:11:51.172Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:11:51.231Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T04:11:51.232Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:12:14.050Z] [INFO] [undefined] Événement: SIGNED_OUT
+DATA: {}
+---
+[2026-05-10T04:12:14.051Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:13:39.720Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T04:13:39.721Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 5)
+---
+[2026-05-10T04:13:39.721Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:13:40.160Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T04:13:40.161Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:22:35.993Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T04:22:35.993Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 6)
+---
+[2026-05-10T04:22:35.994Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T04:22:36.186Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T04:22:36.186Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T05:05:31.805Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T05:05:31.805Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 7)
+---
+[2026-05-10T05:05:31.806Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T05:05:32.208Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T05:05:32.209Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T05:05:34.913Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T05:05:34.913Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 8)
+---
+[2026-05-10T05:05:34.913Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T05:10:29.397Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T05:10:29.397Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 9)
+---
+[2026-05-10T05:10:29.398Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T05:10:29.530Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T05:10:29.530Z] [DEBUG] [undefined] Fetch profil 8 ignoré (périmé)
+---
+[2026-05-10T05:10:41.686Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T05:10:41.686Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 10)
+---
+[2026-05-10T05:10:41.687Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T05:11:47.578Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T05:11:47.578Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 11)
+---
+[2026-05-10T05:11:47.579Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:59:45.132Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T06:59:45.133Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 12)
+---
+[2026-05-10T06:59:45.134Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T06:59:58.111Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T06:59:58.112Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 13)
+---
+[2026-05-10T06:59:58.112Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:00:59.520Z] [INFO] [undefined] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T07:00:59.521Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 14)
+---
+[2026-05-10T07:00:59.522Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:00:59.917Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:00:59.918Z] [DEBUG] [undefined] Fetch profil 10 ignoré (périmé)
+---
+[2026-05-10T07:00:59.978Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:00:59.978Z] [DEBUG] [undefined] Fetch profil 12 ignoré (périmé)
+---
+[2026-05-10T07:01:00.039Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:01:00.039Z] [DEBUG] [undefined] Fetch profil 13 ignoré (périmé)
+---
+[2026-05-10T07:01:00.082Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:01:00.083Z] [DEBUG] [undefined] Fetch profil 9 ignoré (périmé)
+---
+[2026-05-10T07:01:00.128Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:01:00.129Z] [DEBUG] [undefined] Fetch profil 11 ignoré (périmé)
+---
+[2026-05-10T07:01:00.175Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:01:00.175Z] [DEBUG] [undefined] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:01:32.425Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:01:32.451Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T07:01:32.466Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T07:01:32.467Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 1)
+---
+[2026-05-10T07:01:32.470Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:01:32.481Z] [DEBUG] [Store] IndexedDB vide
+---
+[2026-05-10T07:01:32.482Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:01:32.483Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:01:35.462Z] [WARN] [Auth] Timeout d'initialisation (3s)
+---
+[2026-05-10T07:01:35.463Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:01:35.515Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:01:37.494Z] [WARN] [App] Chargement Cloud trop long, continuation avec local
+---
+[2026-05-10T07:01:48.969Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T07:01:49.290Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:01:55.307Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "settings"
+}
