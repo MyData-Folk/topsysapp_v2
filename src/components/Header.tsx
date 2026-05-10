@@ -66,7 +66,14 @@ export function Header({
               <input 
                 type="checkbox" 
                 checked={!selectedHotelId}
-                onChange={(e) => onHotelChange(e.target.checked ? null : (hotels[0]?.id || null))}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    onHotelChange(null);
+                  } else {
+                    const firstId = hotels.length > 0 ? hotels[0].id : null;
+                    onHotelChange(firstId);
+                  }
+                }}
                 className="w-3 h-3 rounded border-border text-gold focus:ring-gold bg-surf2 transition-all cursor-pointer"
               />
               <span className="text-[10px] font-bold text-text-dark group-hover:text-text transition-colors uppercase tracking-tight">Afficher tous les hôtels</span>
