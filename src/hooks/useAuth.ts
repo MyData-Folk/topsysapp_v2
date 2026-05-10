@@ -17,6 +17,8 @@ export interface AuthState {
   refreshProfile: () => Promise<void>
 }
 
+const PROFILE_CACHE_KEY = 'topsys_auth_profile_cache';
+
 async function fetchProfileById(userId: string): Promise<UserProfile | null> {
   if (!supabase) return null
   try {
@@ -30,6 +32,8 @@ async function fetchProfileById(userId: string): Promise<UserProfile | null> {
       return null
     }
     logger.info('Auth', `Profil récupéré pour ${userId}`, data);
+    // Sauvegarde en cache
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
     return data as UserProfile
   } catch (err) {
     logger.error('Auth', `Erreur fetchProfileById pour ${userId}`, err);
@@ -38,6 +42,16 @@ async function fetchProfileById(userId: string): Promise<UserProfile | null> {
 }
 
 async function fetchProfileWithRetry(userId: string, maxRetries = 3): Promise<UserProfile | null> {
+  // On tente d'abord de charger le cache pour débloquer l'UI immédiatement
+  const cached = localStorage.getItem(PROFILE_CACHE_KEY);
+  let initialProfile: UserProfile | null = null;
+  if (cached) {
+    try {
+      const p = JSON.parse(cached);
+      if (p.id === userId) initialProfile = p;
+    } catch {}
+  }
+
   for (let i = 0; i < maxRetries; i++) {
     const profile = await fetchProfileById(userId)
     if (profile) return profile
@@ -46,7 +60,7 @@ async function fetchProfileWithRetry(userId: string, maxRetries = 3): Promise<Us
       await new Promise(r => setTimeout(r, 800))
     }
   }
-  return null
+  return initialProfile; // On retourne le cache si tout a échoué
 }
 
 export function useAuth(): AuthState {
@@ -59,6 +73,19 @@ export function useAuth(): AuthState {
   const loadProfile = useCallback(async (userId: string, isSignIn = false) => {
     const myId = ++fetchIdRef.current
     logger.debug('Auth', `Démarrage fetch profil (ID: ${myId})`);
+    
+    // Tenter de charger le cache tout de suite
+    const cached = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (cached) {
+      try {
+        const p = JSON.parse(cached);
+        if (p.id === userId) {
+          logger.debug('Auth', 'Hydratation profil depuis le cache local');
+          setProfile(p);
+        }
+      } catch {}
+    }
+
     const p = isSignIn
       ? await fetchProfileWithRetry(userId)
       : await fetchProfileById(userId)
