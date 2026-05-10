@@ -11,7 +11,7 @@ import { logger } from '../utils/logger';
 
 interface ImportTabProps {
   config: AppConfig;
-  activeHotel: HotelConfig;
+  activeHotel: HotelConfig | null;
   reports: OccupancyData[];
   selectedReportId: string | null;
   isLoading: boolean;
@@ -141,7 +141,8 @@ export function ImportTab({
       }
       onStorePdf(result.id, file);
 
-      if (result.establishmentName && activeHotel.name === DEFAULT_HOTEL.name) {
+      // Si on est sur l'hôtel par défaut et qu'on détecte un nom, on met à jour
+      if (result.establishmentName && activeHotel?.name === DEFAULT_HOTEL.name) {
         onUpdateHotel({ name: result.establishmentName, address: result.establishmentAddress || activeHotel.address });
       }
 
@@ -171,7 +172,7 @@ export function ImportTab({
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
   const exportReportJson = (r: OccupancyData) => {
-    const filename = generateReportFilename(r, activeHotel.name)
+    const filename = generateReportFilename(r, activeHotel?.name || 'Global')
     const blob = new Blob([JSON.stringify(r, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

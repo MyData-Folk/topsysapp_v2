@@ -109,24 +109,25 @@ export function useAuth(): AuthState {
       logger.info('Auth', `Événement: ${event}`, { userId: u?.id, email: u?.email });
       setUser(u)
 
-      if (u) {
-        // On attend que le profil soit chargé avant de terminer l'initialisation
-        await loadProfile(u.id, event === 'SIGNED_IN')
-      } else {
-        fetchIdRef.current++
-        setProfile(null)
-      }
-
-      if (!initializedRef.current) {
-        logger.info('Auth', 'Initialisation terminée');
-        initializedRef.current = true
-        setLoading(false)
+      try {
+        if (u) {
+          await loadProfile(u.id, event === 'SIGNED_IN')
+        } else {
+          fetchIdRef.current++
+          setProfile(null)
+        }
+      } finally {
+        if (!initializedRef.current) {
+          logger.info('Auth', 'Initialisation terminée via event');
+          initializedRef.current = true
+          setLoading(false)
+        }
       }
     })
 
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
-        logger.warn('Auth', 'Timeout d\'initialisation (3s)');
+        logger.warn('Auth', 'Timeout d\'initialisation (3s) force la levée du chargement');
         initializedRef.current = true
         setLoading(false)
       }
