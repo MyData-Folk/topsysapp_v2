@@ -8,10 +8,10 @@ const BASE_TABS: { id: TabId; label: string; shortLabel: string; icon: Component
   { id: 'analyse', label: 'Analyse & KPIs', shortLabel: 'Analyse', icon: LayoutDashboard },
   { id: 'evolution', label: 'Évolution', shortLabel: 'Évol.', icon: GitCompareArrows },
   { id: 'settings', label: 'Configuration', shortLabel: 'Config', icon: Settings },
-  { id: 'help', label: 'Aide', shortLabel: 'Aide', icon: HelpCircle },
   { id: 'cloud', label: 'Cloud', shortLabel: 'Cloud', icon: Cloud },
 ];
 
+const HELP_TAB = { id: 'help' as TabId, label: 'Aide', shortLabel: 'Aide', icon: HelpCircle };
 const ADMIN_TAB = { id: 'admin' as TabId, label: 'Admin', shortLabel: 'Admin', icon: ShieldCheck };
 
 interface TabNavProps {
@@ -22,7 +22,9 @@ interface TabNavProps {
 }
 
 export function TabNav({ activeTab, onTabChange, isCloudConnected, isAdmin }: TabNavProps) {
-  const tabs = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
+  const tabs = isAdmin 
+    ? [...BASE_TABS, ADMIN_TAB, HELP_TAB] 
+    : [...BASE_TABS, HELP_TAB];
   return (
     <nav className="hidden md:flex px-8 border-b border-border bg-surf1 h-12 shrink-0 sticky top-0 z-50">
       {tabs.map(tab => (
@@ -48,7 +50,9 @@ export function TabNav({ activeTab, onTabChange, isCloudConnected, isAdmin }: Ta
 }
 
 export function TabNavMobile({ activeTab, onTabChange, isCloudConnected, isAdmin }: TabNavProps) {
-  const tabs = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
+  const tabs = isAdmin 
+    ? [...BASE_TABS, ADMIN_TAB, HELP_TAB] 
+    : [...BASE_TABS, HELP_TAB];
   const cols = tabs.length;
   return (
     <nav className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surf1/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">

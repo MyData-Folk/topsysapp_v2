@@ -295,7 +295,7 @@ export default function App() {
           </footer>
 
           <Toast toast={store.toast} />
-          <LogPanel />
+          {auth.isAdmin && <LogPanel />}
         </div>
       )}
     </>
