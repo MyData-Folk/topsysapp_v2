@@ -53,27 +53,27 @@ export function TabNavMobile({ activeTab, onTabChange, isCloudConnected, isAdmin
   const tabs = isAdmin 
     ? [...BASE_TABS, ADMIN_TAB, HELP_TAB] 
     : [...BASE_TABS, HELP_TAB];
-  const cols = tabs.length;
+  
   return (
     <nav className="md:hidden fixed inset-x-0 bottom-0 z-50 border-t border-border bg-surf1/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
-      <div className={`grid h-16 px-1`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      <div className="flex overflow-x-auto no-scrollbar items-center h-16 px-1">
         {tabs.map(tab => (
           <button key={tab.id} type="button" onClick={() => onTabChange(tab.id)}
             aria-label={tab.label} aria-current={activeTab === tab.id ? 'page' : undefined}
             className={cn(
-              "min-h-11 rounded-xl px-1 text-[9px] font-bold transition-all flex flex-col items-center justify-center gap-1",
+              "flex-1 min-w-[60px] h-full rounded-xl text-[8px] font-bold transition-all flex flex-col items-center justify-center gap-0.5",
               activeTab === tab.id
                 ? tab.id === 'admin' ? "text-green bg-green/10" : "text-gold bg-gold/10"
                 : "text-text-dark hover:text-text"
             )}
           >
             <div className="relative">
-              <tab.icon size={18} />
+              <tab.icon size={16} />
               {tab.id === 'cloud' && isCloudConnected && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-green rounded-full" />
               )}
             </div>
-            <span className="leading-none">{tab.shortLabel}</span>
+            <span className="leading-none text-center px-0.5">{tab.shortLabel}</span>
           </button>
         ))}
       </div>
