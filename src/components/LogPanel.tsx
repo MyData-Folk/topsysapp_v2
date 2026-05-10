@@ -34,12 +34,15 @@ export function LogPanel() {
   };
 
   const handleDownload = () => {
-    const text = logs.map(l => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.context}] ${l.message}`).join('\n');
+    const text = logs.map(l => {
+      const dataStr = l.data ? `\nDATA: ${JSON.stringify(l.data, null, 2)}` : '';
+      return `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.context}] ${l.message}${dataStr}`;
+    }).join('\n---\n');
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `topsys-logs-${new Date().toISOString().slice(0, 19)}.txt`;
+    a.download = `topsys-debug-${new Date().toISOString().slice(0, 19)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -79,17 +82,24 @@ export function LogPanel() {
       </div>
 
       {/* Body */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-[11px] space-y-1 bg-bg/50 custom-scrollbar">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-[11px] space-y-2 bg-bg/50 custom-scrollbar">
         {logs.length === 0 && <div className="text-text-dark text-center py-8">Aucun log enregistré</div>}
         {logs.map((log, i) => (
-          <div key={i} className="flex gap-2 border-b border-white/[0.03] pb-1">
-            <span className="text-text-dark shrink-0">[{log.timestamp.split('T')[1].split('.')[0]}]</span>
-            <span className={cn(
-              "font-bold shrink-0 w-12",
-              log.level === 'error' ? 'text-red' : log.level === 'warn' ? 'text-amber' : 'text-blue'
-            )}>{log.level.toUpperCase()}</span>
-            <span className="text-gold shrink-0">[{log.context}]</span>
-            <span className="text-text-dim break-all">{log.message}</span>
+          <div key={i} className="flex flex-col border-b border-white/[0.03] pb-2">
+            <div className="flex gap-2">
+              <span className="text-text-dark shrink-0">[{log.timestamp.split('T')[1].split('.')[0]}]</span>
+              <span className={cn(
+                "font-bold shrink-0 w-12",
+                log.level === 'error' ? 'text-red' : log.level === 'warn' ? 'text-amber' : 'text-blue'
+              )}>{log.level.toUpperCase()}</span>
+              <span className="text-gold shrink-0">[{log.context}]</span>
+              <span className="text-text-dim break-all">{log.message}</span>
+            </div>
+            {log.data && (
+              <pre className="mt-1 ml-14 p-2 bg-black/30 rounded text-[9px] text-text-dark overflow-x-auto">
+                {JSON.stringify(log.data, null, 2)}
+              </pre>
+            )}
           </div>
         ))}
       </div>
