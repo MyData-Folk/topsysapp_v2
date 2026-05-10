@@ -43,6 +43,7 @@ export function ImportTab({
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [previewReport, setPreviewReport] = useState<CloudReportMeta | null>(null)
   const [importingId, setImportingId] = useState<string | null>(null)
+  const [showAllCloud, setShowAllCloud] = useState(false)
 
   // Stable refs so handleFile never needs to be recreated when config/hotel change
   const configRef = React.useRef(config)
@@ -230,11 +231,16 @@ export function ImportTab({
                 onClick={() => { onSelectReport(r.id); onSwitchToAnalyse(); }}
               >
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2 text-[11px] font-bold text-text">
-                    <Calendar size={12} className="text-gold" />
-                    <span>{r.dateLabels[0]?.short} au {r.dateLabels[r.daysCount - 1]?.short}</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-text">
+                      <Calendar size={12} className="text-gold shrink-0" />
+                      <span>{r.dateLabels[0]?.short} au {r.dateLabels[r.daysCount - 1]?.short}</span>
+                    </div>
+                    <div className="text-[10px] font-bold text-gold/80 uppercase tracking-tight truncate pl-5">
+                      {r.establishmentName}
+                    </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                     <button onClick={e => { e.stopPropagation(); exportReportJson(r); }} className="p-1.5 text-text-dark hover:text-blue rounded-lg hover:bg-blue/10 transition-colors" title="Export JSON">
                       <Download size={12} />
                     </button>
@@ -243,7 +249,7 @@ export function ImportTab({
                     </button>
                   </div>
                 </div>
-                <div className="text-[9px] text-text-dark truncate mt-1">{r.fileName || 'Import JSON'}</div>
+                <div className="text-[9px] text-text-dark truncate mt-1 pl-5">{r.fileName || 'Import JSON'}</div>
               </div>
             ))}
           </div>
@@ -254,9 +260,30 @@ export function ImportTab({
       {auth.user && (
         <div className="bg-surf1 p-5 rounded-2xl border border-border">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest flex items-center gap-2">
-              <Cloud size={12} className="text-gold" /> Rapports cloud
-            </h3>
+            <div className="flex items-center gap-4">
+              <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest flex items-center gap-2">
+                <Cloud size={12} className="text-gold" /> Rapports cloud
+              </h3>
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="relative">
+                  <input 
+                    type="checkbox" 
+                    checked={showAllCloud} 
+                    onChange={e => setShowAllCloud(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={cn(
+                    "w-7 h-4 bg-surf2 rounded-full border border-border transition-colors",
+                    showAllCloud ? "bg-gold/20 border-gold/40" : ""
+                  )} />
+                  <div className={cn(
+                    "absolute left-0.5 top-0.5 w-3 h-3 rounded-full transition-all",
+                    showAllCloud ? "translate-x-3 bg-gold" : "bg-text-dark"
+                  )} />
+                </div>
+                <span className="text-[10px] font-bold text-text-dark group-hover:text-text-dim transition-colors">Afficher tout</span>
+              </label>
+            </div>
             <button
               onClick={fetchCloudReports}
               disabled={loadingCloud}
@@ -281,7 +308,16 @@ export function ImportTab({
             <p className="text-xs text-text-dim text-center py-6">Aucun rapport dans le cloud.</p>
           ) : (
             <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-              {cloudReports.map(r => (
+              {cloudReports
+                .filter(r => {
+                  if (showAllCloud) return true;
+                  // Filtrage par hôtel sélectionné
+                  const hotelMatches = !activeHotel || activeHotel.id === 'default' || r.establishment_name === activeHotel.name;
+                  // Filtrage par rapports déjà importés
+                  const isImported = reports.some(lr => lr.periodStr === r.period_str && lr.establishmentName === r.establishment_name);
+                  return hotelMatches && !isImported;
+                })
+                .map(r => (
                 <div key={r.id} className="rounded-xl overflow-hidden">
                   <div
                     className={cn(
@@ -300,9 +336,9 @@ export function ImportTab({
                       <Eye size={11} className="text-text-dark shrink-0 mt-0.5" />
                     </div>
                     <div className="text-[9px] text-text-dark mt-1">
-                      {r.establishment_name && <span>{r.establishment_name} · </span>}
-                      {r.period_str && <span>{r.period_str} · </span>}
-                      <span>{new Date(r.upload_date).toLocaleDateString('fr-FR')}</span>
+                      <span className="text-gold/80 font-bold">{r.establishment_name || 'Hôtel inconnu'}</span>
+                      {r.period_str && <span> · {r.period_str}</span>}
+                      <span> · {new Date(r.upload_date).toLocaleDateString('fr-FR')}</span>
                     </div>
                   </div>
 

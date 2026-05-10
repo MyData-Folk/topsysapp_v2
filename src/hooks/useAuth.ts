@@ -194,9 +194,10 @@ export function useAuth(): AuthState {
   const role       = profile?.role ?? null
   const isApproved = role === 'user' || role === 'admin'
   const isAdmin    = role === 'admin'
+  const isVisitor  = !isApproved && (user !== null || role === 'pending')
 
   return {
-    user, profile, role, isApproved, isAdmin, loading,
+    user, profile, role, isApproved, isAdmin, isVisitor, loading,
     signIn, signUp, signOut,
     refreshProfile: () => loadProfile(user?.id ?? '', false),
   }
