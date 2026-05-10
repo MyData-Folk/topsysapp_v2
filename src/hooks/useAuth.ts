@@ -124,9 +124,13 @@ export function useAuth(): AuthState {
   }
 
   const signOut = async () => {
+    if (!supabase) return
     logger.info('Auth', 'Déconnexion...');
-    const { error } = await supabase.auth.signOut()
-    if (error) throw new Error(error.message)
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      logger.error('Auth', 'Erreur lors de la déconnexion', err)
+    }
   }
 
   const role       = profile?.role ?? null

@@ -44,13 +44,18 @@ export function CloudTab({ auth, activeReport, onAddReport, onShowToast }: Cloud
     else setCloudReports([])
   }, [auth.user, fetchList])
 
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
   const handleSave = async () => {
     if (!activeReport) { onShowToast('Aucun rapport actif à sauvegarder', 'error'); return }
     setActionLoading('save')
+    setSaveSuccess(false)
     try {
       await saveReport(activeReport)
+      setSaveSuccess(true)
       onShowToast('Rapport sauvegardé dans le cloud')
       fetchList()
+      setTimeout(() => setSaveSuccess(false), 3000)
     } catch (e) {
       onShowToast(e instanceof Error ? e.message : 'Erreur inconnue', 'error')
     } finally {
@@ -147,12 +152,18 @@ export function CloudTab({ auth, activeReport, onAddReport, onShowToast }: Cloud
                 <button
                   onClick={handleSave}
                   disabled={actionLoading === 'save'}
-                  className="flex items-center gap-2 px-4 py-2 bg-gold text-bg font-bold rounded-xl text-sm hover:bg-gold-light transition-all disabled:opacity-50"
+                  className={`flex items-center gap-2 px-4 py-2 font-bold rounded-xl text-sm transition-all disabled:opacity-50 ${
+                    saveSuccess ? 'bg-green/10 text-green border border-green/30' : 'bg-gold text-bg hover:bg-gold-light'
+                  }`}
                 >
-                  {actionLoading === 'save'
-                    ? <div className="w-4 h-4 border-2 border-bg border-t-transparent rounded-full animate-spin" />
-                    : <Upload size={14} />}
-                  Sauvegarder
+                  {actionLoading === 'save' ? (
+                    <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${saveSuccess ? 'border-green-400' : 'border-bg'}`} />
+                  ) : saveSuccess ? (
+                    <RefreshCw size={14} className="animate-pulse" />
+                  ) : (
+                    <Upload size={14} />
+                  )}
+                  {saveSuccess ? 'Sauvegardé !' : 'Sauvegarder'}
                 </button>
               </div>
             ) : (
