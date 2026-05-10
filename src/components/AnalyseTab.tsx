@@ -132,6 +132,22 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
           </div>
         )}
 
+        {/* Guest Mode Warning */}
+        {!auth.user && (
+          <div className="flex items-start gap-4 p-5 bg-gold/10 border border-gold/30 rounded-2xl">
+            <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center text-gold shrink-0">
+              <Cloud size={20} />
+            </div>
+            <div>
+              <h4 className="font-serif text-sm font-bold text-text">Mode Invité — Sauvegarde limitée</h4>
+              <p className="text-[11px] text-text-dark mt-1 leading-relaxed">
+                Vous utilisez l'application sans compte. Vos analyses resteront stockées localement sur ce navigateur, 
+                mais ne seront pas sauvegardées sur le Cloud. Connectez-vous pour synchroniser vos données et accéder à l'historique complet.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Report info banner */}
         {report.establishmentName && (
           <div className="flex flex-col gap-3 p-4 bg-gold/5 border border-gold/10 rounded-2xl md:flex-row md:items-center md:justify-between">
@@ -174,17 +190,17 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
               </button>
             </div>
 
-            {/* Supabase publish */}
-            {auth.user && (
-              <div className="bg-surf1 border border-border rounded-2xl p-4 space-y-3">
+            {/* Supabase publish - Uniquement si connecté */}
+            {auth.user ? (
+              <div className="bg-surf1 border border-border rounded-2xl p-4 space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-gold font-serif text-sm font-bold">
-                    <DatabaseZap size={16} /> Disponibilités Supabase
+                    <DatabaseZap size={16} /> Disponibilités Cloud (Supabase)
                   </div>
                   {hotel.supabaseRegistered && (
                     <button
                       onClick={() => setShowHistory(v => !v)}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-surf2 border border-border rounded-lg text-[10px] font-bold text-text-dark hover:border-gold/30 hover:text-gold transition-all"
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-surf2 border border-border rounded-lg text-[10px] font-bold text-text-dark hover:border-gold/30 hover:text-gold transition-all shadow-sm"
                     >
                       <History size={12} /> Historique
                     </button>
@@ -192,10 +208,15 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
                 </div>
 
                 {!hotel.supabaseRegistered ? (
-                  <p className="text-[11px] text-amber">
-                    Cet hôtel n'est pas encore enregistré dans Supabase.
-                    Allez dans <strong>Paramètres</strong> → section <em>Disponibilités Supabase</em> pour l'activer.
-                  </p>
+                  <div className="p-3 bg-amber/10 border border-amber/20 rounded-xl">
+                    <p className="text-[11px] text-amber flex items-center gap-2">
+                      <AlertTriangle size={12} />
+                      Cet hôtel n'est pas encore enregistré dans Supabase.
+                    </p>
+                    <p className="text-[10px] text-amber/70 mt-1 pl-5">
+                      Allez dans l'onglet Paramètres pour l'activer et commencer la synchronisation.
+                    </p>
+                  </div>
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-surf2 rounded-xl border border-border">
                     <div className="text-xs">
@@ -205,7 +226,7 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
                     <button
                       onClick={handlePush}
                       disabled={pushing}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-gold text-bg font-bold rounded-xl text-xs hover:bg-gold-light transition-all disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-gold text-bg font-bold rounded-xl text-xs hover:bg-gold-light transition-all disabled:opacity-50 shadow-sm"
                     >
                       {pushing
                         ? <div className="w-3 h-3 border-2 border-bg border-t-transparent rounded-full animate-spin" />
@@ -214,7 +235,7 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
                     </button>
                   </div>
                 )}
-
+                
                 {/* Historique snapshots */}
                 {showHistory && hotel.supabaseRegistered && (
                   <div className="border-t border-border pt-3 space-y-2">

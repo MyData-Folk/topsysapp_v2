@@ -1,62 +1,111 @@
 import { HotelConfig, OccupancyData, ThemeMode } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 import { AuthState } from '../hooks/useAuth';
-import { Cloud, LogOut } from 'lucide-react';
+import { Cloud, LogOut, RefreshCw, ChevronDown, Building2 } from 'lucide-react';
+import { cn } from '../utils/cn';
 
 interface HeaderProps {
-  hotel: HotelConfig;
+  hotels: HotelConfig[];
+  selectedHotelId: string | null;
+  onHotelChange: (id: string | null) => void;
   report: OccupancyData | null;
   theme: ThemeMode;
   onThemeChange: (t: ThemeMode) => void;
+  onRefresh: () => void;
   auth: AuthState;
+  isLoading?: boolean;
 }
 
-export function Header({ hotel, report, theme, onThemeChange, auth }: HeaderProps) {
+export function Header({ 
+  hotels, 
+  selectedHotelId, 
+  onHotelChange, 
+  report, 
+  theme, 
+  onThemeChange, 
+  onRefresh, 
+  auth,
+  isLoading 
+}: HeaderProps) {
+  const activeHotel = hotels.find(h => h.id === selectedHotelId);
+
   return (
-    <header className="px-8 py-5 border-b border-border bg-surf1 relative overflow-hidden shrink-0">
+    <header className="px-6 py-4 border-b border-border bg-surf1 relative overflow-hidden shrink-0">
       <div className="absolute top-0 right-0 w-80 h-80 bg-gold/3 rounded-full blur-3xl -mr-40 -mt-40 pointer-events-none" />
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center">
-            <span className="text-gold font-serif font-bold text-lg">T</span>
+      <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        
+        {/* Section Gauche : Logo + Sélecteur d'Hôtel */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gold/10 rounded-xl flex items-center justify-center shrink-0">
+              <span className="text-gold font-serif font-bold text-lg">T</span>
+            </div>
+            <div className="hidden sm:block h-8 w-px bg-border mx-1" />
           </div>
-          <div>
-            <h1 className="font-serif text-xl font-bold text-text tracking-tight">{hotel.name}</h1>
-            <p className="text-text-dark text-[10px] uppercase tracking-widest">
-              {hotel.address}{hotel.reference ? ` • ${hotel.reference}` : ''}
-            </p>
+
+          <div className="relative group flex-1 sm:flex-initial min-w-[200px]">
+            <select
+              value={selectedHotelId || ''}
+              onChange={(e) => onHotelChange(e.target.value || null)}
+              className="w-full appearance-none bg-surf2 border border-border rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-text focus:border-gold focus:ring-1 focus:ring-gold/20 outline-none transition-all cursor-pointer"
+            >
+              <option value="">Tous les établissements</option>
+              {hotels.map(h => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-dim group-hover:text-gold transition-colors">
+              <ChevronDown size={14} />
+            </div>
+            {activeHotel && (
+              <p className="absolute -bottom-4 left-4 text-[9px] text-text-dark uppercase tracking-widest whitespace-nowrap">
+                {activeHotel.address}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-          {/* Cloud Status Card - Persistant pendant la session */}
+        {/* Section Droite : Actions + Auth */}
+        <div className="flex flex-wrap items-center justify-end gap-3 w-full lg:w-auto">
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onRefresh}
+              disabled={isLoading}
+              className={cn(
+                "p-2.5 bg-surf2 border border-border rounded-xl text-text-dim hover:text-gold hover:border-gold/30 transition-all shadow-sm",
+                isLoading && "opacity-50"
+              )}
+              title="Actualiser les données"
+            >
+              <RefreshCw size={15} className={cn(isLoading && "animate-spin")} />
+            </button>
+            <ThemeToggle theme={theme} onChange={onThemeChange} />
+          </div>
+
           {auth.user && (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gold/5 border border-gold/20 p-2 rounded-xl">
-              <div className="flex items-center gap-2 px-2 py-1">
+            <div className="flex items-center gap-2 bg-gold/5 border border-gold/20 p-1.5 rounded-xl shadow-sm">
+              <div className="flex items-center gap-2 px-2.5">
                 <Cloud size={14} className="text-gold" />
-                <span className="text-[10px] font-bold text-text truncate max-w-[140px] sm:max-w-[200px]">
-                  {auth.user?.email || 'Chargement...'}
+                <span className="text-[10px] font-bold text-text truncate max-w-[120px]">
+                  {auth.user.email}
                 </span>
               </div>
               <button
                 onClick={() => auth.signOut()}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-surf2 border border-border rounded-lg text-[10px] font-bold text-text-dim hover:text-red hover:border-red/30 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-surf2 border border-border rounded-lg text-[10px] font-bold text-text-dim hover:text-red hover:border-red/30 transition-all"
               >
-                <LogOut size={12} /> Déconnexion
+                <LogOut size={12} />
               </button>
             </div>
           )}
 
-          <div className="flex items-center justify-between sm:justify-end gap-3">
-            {report && (
-              <div className="flex gap-2">
-                <span className="px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/20 text-gold text-[10px] font-bold">
-                  {report.dateLabels[0]?.short} → {report.dateLabels[report.daysCount - 1]?.short}
-                </span>
-              </div>
-            )}
-            <ThemeToggle theme={theme} onChange={onThemeChange} />
-          </div>
+          {report && (
+            <div className="hidden sm:flex px-3 py-2 rounded-xl bg-surf2 border border-border text-gold text-[10px] font-bold shadow-sm">
+              <span className="opacity-50 mr-2">Période :</span>
+              {report.dateLabels[0]?.short} → {report.dateLabels[report.daysCount - 1]?.short}
+            </div>
+          )}
         </div>
       </div>
     </header>

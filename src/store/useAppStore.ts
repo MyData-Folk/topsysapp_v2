@@ -61,6 +61,7 @@ export function useAppStore() {
   const [config, setConfig] = useState<AppConfig>(loadConfig);
   const [isHydrated, setIsHydrated] = useState(false);
   const [reports, setReports] = useState<OccupancyData[]>([]);
+  const [selectedHotelId, setSelectedHotelId] = useState<string | null>(config.selectedHotelId || null);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('import');
   const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS });
@@ -70,29 +71,44 @@ export function useAppStore() {
   const [toast, setToast] = useState<{ message: string; type: 'ok' | 'error' } | null>(null);
 
   const activeHotel = useMemo(() => {
-    return config.hotels.find(h => h.id === config.selectedHotelId) || config.hotels[0];
-  }, [config.hotels, config.selectedHotelId]);
+    return config.hotels.find(h => h.id === selectedHotelId) || config.hotels[0];
+  }, [config.hotels, selectedHotelId]);
+
+  const filteredReports = useMemo(() => {
+    if (!selectedHotelId) return reports;
+    // On filtre par le nom de l'établissement car les IDs de rapports ne sont pas forcément liés aux IDs d'hôtels locaux
+    const hotel = config.hotels.find(h => h.id === selectedHotelId);
+    if (!hotel) return reports;
+    return reports.filter(r => 
+      r.establishmentName?.toLowerCase().includes(hotel.name.toLowerCase()) ||
+      hotel.name.toLowerCase().includes(r.establishmentName?.toLowerCase() || '')
+    );
+  }, [reports, selectedHotelId, config.hotels]);
 
   const activeReport = useMemo(() => {
-    return reports.find(r => r.id === selectedReportId) || reports[0] || null;
-  }, [reports, selectedReportId]);
+    return filteredReports.find(r => r.id === selectedReportId) || filteredReports[0] || null;
+  }, [filteredReports, selectedReportId]);
 
-  // Load reports from IndexedDB
-  useEffect(() => {
+  const hydrateFromIDB = useCallback(async () => {
     logger.info('Store', 'Démarrage hydratation IndexedDB...');
-    get(IDB_KEY).then(saved => {
+    try {
+      const saved = await get(IDB_KEY);
       if (saved && Array.isArray(saved)) {
         logger.info('Store', `${saved.length} rapports chargés depuis IndexedDB`);
         setReports(saved.map(hydrateReport));
       } else {
         logger.debug('Store', 'IndexedDB vide');
       }
-      setIsHydrated(true);
-    }).catch(err => {
+    } catch (err) {
       logger.error('Store', 'Erreur hydratation IndexedDB', err);
+    } finally {
       setIsHydrated(true);
-    });
+    }
   }, []);
+
+  useEffect(() => {
+    hydrateFromIDB();
+  }, [hydrateFromIDB]);
 
   // Persist config to localStorage
   useEffect(() => {
@@ -131,21 +147,18 @@ export function useAppStore() {
     }
   }, [reports, config.autoSave]);
 
-  // Auto-select hotel when report changes
+  // Auto-select hotel when report changes (uniquement si rien n'est sélectionné manuellement)
   useEffect(() => {
-    if (!activeReport?.establishmentName) return;
-    setConfig(prev => {
-      const match = prev.hotels.find(h =>
-        h.name.toLowerCase().includes(activeReport.establishmentName!.toLowerCase()) ||
-        activeReport.establishmentName!.toLowerCase().includes(h.name.toLowerCase())
-      );
-      if (match && match.id !== prev.selectedHotelId) {
-        logger.info('Store', `Auto-sélection hôtel: ${match.name}`);
-        return { ...prev, selectedHotelId: match.id };
-      }
-      return prev;
-    });
-  }, [activeReport?.id, activeReport?.establishmentName]);
+    if (!activeReport?.establishmentName || selectedHotelId) return;
+    const match = config.hotels.find(h =>
+      h.name.toLowerCase().includes(activeReport.establishmentName!.toLowerCase()) ||
+      activeReport.establishmentName!.toLowerCase().includes(h.name.toLowerCase())
+    );
+    if (match) {
+      logger.info('Store', `Auto-sélection hôtel: ${match.name}`);
+      setSelectedHotelId(match.id);
+    }
+  }, [activeReport?.id, activeReport?.establishmentName, selectedHotelId]);
 
   const showToast = useCallback((message: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ message, type });
@@ -215,11 +228,23 @@ export function useAppStore() {
     logger.info('Store', `Suppression établissement: ${id}`);
     setConfig(prev => {
       const filtered = prev.hotels.filter(h => h.id !== id);
-      // Si on supprime l'hôtel actif, on bascule sur le premier restant
-      const newSelected = prev.selectedHotelId === id ? filtered[0].id : prev.selectedHotelId;
-      return { ...prev, hotels: filtered, selectedHotelId: newSelected };
+      return { ...prev, hotels: filtered };
     });
-  }, [config.hotels.length, config.selectedHotelId]);
+    if (selectedHotelId === id) setSelectedHotelId(null);
+  }, [selectedHotelId]);
+
+  const refreshData = useCallback(async () => {
+    logger.info('Store', 'Rafraîchissement manuel des données lancé...');
+    setIsLoading(true);
+    try {
+      await hydrateFromIDB();
+      showToast('Données actualisées');
+    } catch (e) {
+      showToast('Erreur lors de l\'actualisation', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hydrateFromIDB, showToast]);
 
   const resetFilters = useCallback(() => {
     setFilters({ ...DEFAULT_FILTERS, types: new Set(), dows: new Set([0, 1, 2, 3, 4, 5, 6]) });
@@ -242,5 +267,12 @@ export function useAppStore() {
     isLoading, setIsLoading,
     error, setError,
     toast, showToast,
+    selectedHotelId, 
+    setSelectedHotelId: (id: string | null) => {
+      setSelectedHotelId(id);
+      if (id) updateConfig({ selectedHotelId: id });
+    },
+    filteredReports,
+    refreshData
   };
 }
