@@ -22,6 +22,7 @@ import { supabase } from './lib/supabaseClient';
 import { logger } from './utils/logger';
 import { loadCloudConfig } from './lib/supabaseStorage';
 import { DEFAULT_CONFIG } from './utils/constants';
+import { LogPanel } from './components/LogPanel';
 
 export default function App() {
   const store = useAppStore();
@@ -54,6 +55,17 @@ export default function App() {
         if (cloudConfig) {
           logger.info('App', 'Config Cloud appliquée');
           store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }));
+          
+          // Hydratation des filtres si présents
+          if ((cloudConfig as any).lastFilters) {
+            const f = (cloudConfig as any).lastFilters;
+            store.setFilters({
+              ...f,
+              types: new Set(f.types || []),
+              dows: new Set(f.dows || [0,1,2,3,4,5,6])
+            });
+            logger.info('App', 'Filtres restaurés depuis le Cloud');
+          }
         }
       }).catch(err => logger.error('App', 'Erreur Cloud Config', err));
     }
@@ -283,6 +295,7 @@ export default function App() {
           </footer>
 
           <Toast toast={store.toast} />
+          <LogPanel />
         </div>
       )}
     </>

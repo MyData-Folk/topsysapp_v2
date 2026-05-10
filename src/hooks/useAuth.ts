@@ -125,11 +125,26 @@ export function useAuth(): AuthState {
 
   const signOut = async () => {
     if (!supabase) return
-    logger.info('Auth', 'Déconnexion...');
+    logger.info('Auth', 'Déconnexion radicale lancée...');
+    
+    // 1. Réinitialisation immédiate de l'état local pour débloquer l'UI
+    setUser(null)
+    setProfile(null)
+    
     try {
+      // 2. Déconnexion Supabase
       await supabase.auth.signOut()
+      
+      // 3. Nettoyage forcé des storages (radical pour les sessions persistantes)
+      localStorage.removeItem('supabase.auth.token')
+      sessionStorage.clear()
+      
+      logger.info('Auth', 'Nettoyage terminé, rechargement...');
+      // 4. Rechargement de la page pour repartir sur un état vierge
+      window.location.reload()
     } catch (err) {
       logger.error('Auth', 'Erreur lors de la déconnexion', err)
+      window.location.reload()
     }
   }
 
