@@ -162,8 +162,9 @@ export function useAuth(): AuthState {
       // 2. Déconnexion Supabase
       await supabase.auth.signOut()
       
-      // 3. Nettoyage forcé des storages (radical pour les sessions persistantes)
+      // 3. Nettoyage forcé des storages
       localStorage.removeItem('supabase.auth.token')
+      localStorage.removeItem(PROFILE_CACHE_KEY) // On vide aussi le cache profil !
       sessionStorage.clear()
       
       logger.info('Auth', 'Nettoyage terminé, rechargement...');
