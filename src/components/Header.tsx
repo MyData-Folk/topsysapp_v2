@@ -35,7 +35,7 @@ export function Header({ hotel, report, theme, onThemeChange, auth }: HeaderProp
               <div className="flex items-center gap-2 px-2 py-1">
                 <Cloud size={14} className="text-gold" />
                 <span className="text-[10px] font-bold text-text truncate max-w-[140px] sm:max-w-[200px]">
-                  {auth.user.email}
+                  {auth.user?.email || 'Chargement...'}
                 </span>
               </div>
               <button
