@@ -159,20 +159,31 @@ export function useAuth(): AuthState {
     setProfile(null)
     
     try {
-      // 2. Déconnexion Supabase
-      await supabase.auth.signOut()
+      // 2. Déconnexion Supabase (peut échouer si token déjà expiré)
+      await supabase.auth.signOut().catch(() => {});
       
-      // 3. Nettoyage forcé des storages
-      localStorage.removeItem('supabase.auth.token')
-      localStorage.removeItem(PROFILE_CACHE_KEY) // On vide aussi le cache profil !
-      sessionStorage.clear()
+      // 3. Nettoyage FORCÉ de TOUT le localStorage lié à l'app et à Supabase
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem(PROFILE_CACHE_KEY);
       
-      logger.info('Auth', 'Nettoyage terminé, rechargement...');
+      // Purge nucléaire des clés Supabase (elles commencent toutes par sb-)
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      
+      sessionStorage.clear();
+      
+      logger.info('Auth', 'Nettoyage nucléaire terminé, rechargement...');
       // 4. Rechargement de la page pour repartir sur un état vierge
-      window.location.reload()
+      window.location.reload();
     } catch (err) {
-      logger.error('Auth', 'Erreur lors de la déconnexion', err)
-      window.location.reload()
+      logger.error('Auth', 'Erreur lors de la déconnexion', err);
+      window.location.reload();
     }
   }
 
