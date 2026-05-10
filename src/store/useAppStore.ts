@@ -71,7 +71,7 @@ export function useAppStore() {
   const [toast, setToast] = useState<{ message: string; type: 'ok' | 'error' } | null>(null);
 
   const activeHotel = useMemo(() => {
-    return config.hotels.find(h => h.id === selectedHotelId) || config.hotels[0];
+    return config.hotels.find(h => h.id === selectedHotelId) || null;
   }, [config.hotels, selectedHotelId]);
 
   const filteredReports = useMemo(() => {
