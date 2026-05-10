@@ -210,11 +210,15 @@ export default function App() {
       {!auth.loading && (auth.isApproved || skipAuth || (auth.user && auth.profile === null)) && (
         <div className="flex flex-col min-h-screen bg-bg font-sans selection:bg-gold/30">
           <Header
-            hotel={store.activeHotel}
+            hotels={store.config.hotels}
+            selectedHotelId={store.selectedHotelId}
+            onHotelChange={store.setSelectedHotelId}
             report={store.activeReport}
             theme={store.config.theme}
             onThemeChange={t => store.updateConfig({ theme: t })}
+            onRefresh={store.refreshData}
             auth={auth}
+            isLoading={store.isLoading}
           />
           <TabNav activeTab={store.activeTab} onTabChange={store.setActiveTab} isCloudConnected={!!auth.user} isAdmin={auth.isAdmin} />
 
@@ -225,7 +229,7 @@ export default function App() {
                   <ImportTab
                     config={store.config}
                     activeHotel={store.activeHotel}
-                    reports={store.reports}
+                    reports={store.filteredReports}
                     selectedReportId={store.selectedReportId}
                     isLoading={store.isLoading}
                     error={store.error}

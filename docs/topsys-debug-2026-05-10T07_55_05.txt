@@ -1,0 +1,625 @@
+[2026-05-10T07:52:11.800Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:11.825Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T07:52:11.861Z] [DEBUG] [Store] IndexedDB vide
+---
+[2026-05-10T07:52:11.864Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:11.880Z] [INFO] [Auth] Événement: INITIAL_SESSION
+DATA: {}
+---
+[2026-05-10T07:52:11.880Z] [INFO] [Auth] Initialisation terminée
+---
+[2026-05-10T07:52:11.881Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:14.097Z] [INFO] [Auth] Tentative connexion: galizilemgalizi@gmail.com
+---
+[2026-05-10T07:52:14.523Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T07:52:14.523Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 2)
+---
+[2026-05-10T07:52:14.525Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:14.561Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:52:14.562Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:52:14.567Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:14.952Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T07:52:14.953Z] [INFO] [App] 7 rapports détectés sur le Cloud. Vérification...
+---
+[2026-05-10T07:52:14.954Z] [INFO] [Auth] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:52:14.954Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:14.957Z] [INFO] [App] Profil chargé - Rôle: admin - Admin: OUI
+---
+[2026-05-10T07:52:15.006Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T07:52:15.029Z] [INFO] [App] Config Cloud appliquée
+---
+[2026-05-10T07:52:15.030Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.303Z] [INFO] [Store] Rapport ajouté: 1777973681187-iyadmc1d82k
+---
+[2026-05-10T07:52:15.304Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.308Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.429Z] [INFO] [Store] Rapport ajouté: 1778232791358-sxkyl6p1g0f
+---
+[2026-05-10T07:52:15.429Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.435Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.575Z] [INFO] [Store] Rapport ajouté: 1778165199727-21if3u5v9j
+---
+[2026-05-10T07:52:15.575Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.578Z] [INFO] [Store] Auto-sélection hôtel: HOTEL WASHINGTON OPERA
+---
+[2026-05-10T07:52:15.578Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.714Z] [INFO] [Store] Rapport ajouté: c18c88df-3f6c-4e98-afad-890252bd8719
+---
+[2026-05-10T07:52:15.714Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.720Z] [INFO] [Store] Auto-sélection hôtel: VENDOME OPERA
+---
+[2026-05-10T07:52:15.720Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.890Z] [INFO] [Store] Rapport ajouté: bacfd5b3-ebc8-4215-a778-6ffba98452cb
+---
+[2026-05-10T07:52:15.890Z] [INFO] [App] 5 rapports synchronisés depuis le Cloud
+---
+[2026-05-10T07:52:15.890Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:15.893Z] [INFO] [Store] Auto-sélection hôtel: FOLKESTONE OPERA
+---
+[2026-05-10T07:52:15.893Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:17.943Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T07:52:23.866Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T07:52:23.866Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 3)
+---
+[2026-05-10T07:52:23.866Z] [DEBUG] [Auth] Hydratation profil depuis le cache local
+---
+[2026-05-10T07:52:23.867Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:23.872Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:52:23.873Z] [INFO] [App] Profil chargé - Rôle: admin - Admin: OUI
+---
+[2026-05-10T07:52:23.873Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:52:24.062Z] [INFO] [Auth] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T07:52:24.063Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:24.065Z] [INFO] [App] Profil chargé - Rôle: admin - Admin: OUI
+---
+[2026-05-10T07:52:24.354Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T07:52:24.360Z] [INFO] [App] Config Cloud appliquée
+---
+[2026-05-10T07:52:24.360Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:24.394Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T07:52:24.394Z] [INFO] [App] 7 rapports détectés sur le Cloud. Vérification...
+---
+[2026-05-10T07:52:24.394Z] [INFO] [App] Tous les rapports Cloud sont déjà présents en local
+---
+[2026-05-10T07:52:27.107Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T07:52:31.301Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:31.325Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T07:52:31.343Z] [INFO] [Store] 5 rapports chargés depuis IndexedDB
+---
+[2026-05-10T07:52:31.344Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:31.346Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:31.377Z] [INFO] [Auth] Événement: INITIAL_SESSION
+DATA: {}
+---
+[2026-05-10T07:52:31.377Z] [INFO] [Auth] Initialisation terminée
+---
+[2026-05-10T07:52:31.378Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:54.427Z] [INFO] [Auth] Tentative connexion: mydata.folkestone@gmail.com
+---
+[2026-05-10T07:52:54.587Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "52def175-7a7d-435d-9a05-f1476cb73645",
+  "email": "mydata.folkestone@gmail.com"
+}
+---
+[2026-05-10T07:52:54.587Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 2)
+---
+[2026-05-10T07:52:54.589Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:54.636Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:52:54.637Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:52:54.931Z] [INFO] [Auth] Profil récupéré pour 52def175-7a7d-435d-9a05-f1476cb73645
+DATA: {
+  "id": "52def175-7a7d-435d-9a05-f1476cb73645",
+  "email": "mydata.folkestone@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T09:32:26.224505+00:00"
+}
+---
+[2026-05-10T07:52:54.932Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:54.936Z] [INFO] [App] Profil chargé - Rôle: admin - Admin: OUI
+---
+[2026-05-10T07:52:55.452Z] [INFO] [Storage] 2 rapports trouvés
+---
+[2026-05-10T07:52:55.476Z] [INFO] [App] Config Cloud appliquée
+---
+[2026-05-10T07:52:55.477Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:52:55.490Z] [INFO] [Storage] 2 rapports trouvés
+---
+[2026-05-10T07:52:55.491Z] [INFO] [App] 2 rapports détectés sur le Cloud. Vérification...
+---
+[2026-05-10T07:52:55.491Z] [INFO] [App] Tous les rapports Cloud sont déjà présents en local
+---
+[2026-05-10T07:52:57.529Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T07:52:58.087Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "admin"
+}
+---
+[2026-05-10T07:53:11.297Z] [INFO] [Auth] Déconnexion radicale lancée...
+---
+[2026-05-10T07:53:11.298Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "admin"
+}
+---
+[2026-05-10T07:53:11.447Z] [INFO] [Auth] Événement: SIGNED_OUT
+DATA: {}
+---
+[2026-05-10T07:53:11.448Z] [INFO] [Auth] Nettoyage nucléaire terminé, rechargement...
+---
+[2026-05-10T07:53:11.451Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "admin"
+}
+---
+[2026-05-10T07:53:11.564Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:11.566Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T07:53:11.589Z] [INFO] [Store] 5 rapports chargés depuis IndexedDB
+---
+[2026-05-10T07:53:11.589Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:11.590Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:11.700Z] [INFO] [Auth] Événement: INITIAL_SESSION
+DATA: {}
+---
+[2026-05-10T07:53:11.700Z] [INFO] [Auth] Initialisation terminée
+---
+[2026-05-10T07:53:11.701Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:30.373Z] [INFO] [Auth] Tentative connexion: bourayou@gmail.com
+---
+[2026-05-10T07:53:30.531Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "e807d83d-e994-4f55-9437-1633f5666802",
+  "email": "bourayou@gmail.com"
+}
+---
+[2026-05-10T07:53:30.531Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 2)
+---
+[2026-05-10T07:53:30.532Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:30.558Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:53:30.559Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:53:30.744Z] [INFO] [Auth] Profil récupéré pour e807d83d-e994-4f55-9437-1633f5666802
+DATA: {
+  "id": "e807d83d-e994-4f55-9437-1633f5666802",
+  "email": "bourayou@gmail.com",
+  "role": "user",
+  "approved_by": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "approved_at": "2026-05-10T04:17:06.323+00:00",
+  "created_at": "2026-05-09T09:58:32.584259+00:00"
+}
+---
+[2026-05-10T07:53:30.747Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:30.750Z] [INFO] [App] Profil chargé - Rôle: user - Admin: NON
+---
+[2026-05-10T07:53:31.398Z] [INFO] [Storage] 0 rapports trouvés
+---
+[2026-05-10T07:53:31.404Z] [INFO] [App] Config Cloud appliquée
+---
+[2026-05-10T07:53:31.405Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:31.438Z] [INFO] [Storage] 0 rapports trouvés
+---
+[2026-05-10T07:53:33.140Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T07:53:33.141Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 3)
+---
+[2026-05-10T07:53:33.143Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:53:33.153Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:53:33.154Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:53:38.156Z] [WARN] [App] Chargement Cloud trop long, continuation avec local
+---
+[2026-05-10T07:53:40.106Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T07:53:42.903Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:53:48.237Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:53:49.543Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:53:51.915Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:53:53.230Z] [INFO] [Store] Suppression établissement: hotel-1777973892218
+---
+[2026-05-10T07:53:53.230Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:54:11.250Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:54:14.261Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:54:48.808Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T07:54:49.130Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:54:56.074Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:54:57.154Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "evolution"
+}
+---
+[2026-05-10T07:54:59.422Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T07:55:00.840Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:55:01.165Z] [INFO] [Storage] Récupération de la liste des rapports...

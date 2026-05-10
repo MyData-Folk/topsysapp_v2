@@ -61,7 +61,24 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     if (!canLoad) return;
     setLoading(true);
     try {
-      const result = await fetchSnapshotsForEvolution(hotel.id, dateFrom, dateTo);
+      let result = await fetchSnapshotsForEvolution(hotel.id, dateFrom, dateTo);
+      
+      // Dédoublonnage par date d'édition et hôtel
+      const seen = new Set();
+      result = result.filter(s => {
+        const key = `${s.edition_date}-${s.establishment_name}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      // Tri chronologique croissant (le plus ancien en premier, le plus récent en dernier)
+      result.sort((a, b) => {
+        const dateA = a.edition_date || a.import_date;
+        const dateB = b.edition_date || b.import_date;
+        return dateA.localeCompare(dateB);
+      });
+
       setSnapshots(result);
       setLoaded(true);
       if (result.length === 0) onShowToast('Aucun snapshot trouvé pour cette plage', 'error');
@@ -179,7 +196,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
         type: type.label,
         code: type.code,
         bySnap,
-        diff: lastValid - firstValid,
+        diff: lastValid - firstValid, // Récent - Ancien
       };
     }).filter(Boolean) as {
       type: string;
@@ -200,7 +217,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     const first = list[0];
     const last = list[list.length - 1];
     return {
-      rateDiff: last.avgRate - first.avgRate,
+      rateDiff: last.avgRate - first.avgRate, // Récent - Ancien
       occDiff: last.totalOcc - first.totalOcc,
       libresDiff: last.totalLibres - first.totalLibres,
       firstRate: first.avgRate,
