@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ShieldCheck, Clock, UserCheck, UserX, Crown, RefreshCw, AlertCircle, Users } from 'lucide-react'
 import { AuthState } from '../hooks/useAuth'
-import { listPendingUsers, approveUser, rejectUser, promoteToAdmin, revokeUser, UserProfile } from '../lib/adminStorage'
+import { listPendingUsers, approveUser, rejectUser, promoteToAdmin, revokeUser, UserProfile, AdminLog, listAdminLogs } from '../lib/adminStorage'
 import { cn } from '../utils/cn'
+import { Terminal, Download } from 'lucide-react'
 
 interface AdminTabProps {
   auth: AuthState
@@ -51,11 +52,31 @@ export function AdminTab({ auth, onShowToast }: AdminTabProps) {
   const approved = users.filter(u => u.role === 'user')
   const admins = users.filter(u => u.role === 'admin')
 
+  const [adminLogs, setAdminLogs] = useState<AdminLog[]>([])
+  const [loadingLogs, setLoadingLogs] = useState(false)
+
+  const fetchLogs = useCallback(async () => {
+    setLoadingLogs(true)
+    try {
+      const list = await listAdminLogs()
+      setAdminLogs(list)
+    } catch (e) {
+      onShowToast(e instanceof Error ? e.message : 'Erreur logs', 'error')
+    } finally {
+      setLoadingLogs(false)
+    }
+  }, [])
+
+  useEffect(() => { 
+    fetchUsers()
+    fetchLogs()
+  }, [fetchUsers, fetchLogs])
+
   if (!auth.isAdmin) {
     return (
       <div className="max-w-xl mx-auto py-24 text-center opacity-50">
         <ShieldCheck size={48} className="mx-auto mb-4" />
-        <p className="text-sm">Accès réservé aux administrateurs.</p>
+        <p className="text-sm font-bold">Accès réservé aux administrateurs.</p>
       </div>
     )
   }
@@ -176,15 +197,47 @@ export function AdminTab({ auth, onShowToast }: AdminTabProps) {
         </div>
       )}
 
-      {/* Note migration */}
-      <div className="p-4 bg-surf1 border border-border rounded-2xl text-xs text-text-dark space-y-1">
-        <div className="flex items-center gap-2 font-bold text-text mb-2">
-          <AlertCircle size={13} className="text-amber" /> Premier déploiement
+      {/* Logs d'audit */}
+      <div className="bg-surf1 border border-border rounded-2xl overflow-hidden">
+        <div className="p-5 flex items-center justify-between border-b border-border">
+          <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest flex items-center gap-2">
+            <Terminal size={12} /> Logs d'Audit Système (Cloud)
+          </h3>
+          <button onClick={fetchLogs} disabled={loadingLogs}
+            className="p-1.5 text-text-dark hover:text-gold transition-all">
+            <RefreshCw size={12} className={loadingLogs ? 'animate-spin' : ''} />
+          </button>
         </div>
-        <p>Pour promouvoir le premier administrateur, exécutez dans le SQL Editor Supabase :</p>
-        <code className="block mt-2 p-2 bg-surf2 rounded-lg font-mono text-[10px] leading-relaxed">
-          update public.profiles set role = 'admin', approved_at = now() where email = 'votre@email.com';
-        </code>
+        <div className="max-h-[400px] overflow-y-auto">
+          {adminLogs.length > 0 ? (
+            <table className="w-full text-left text-[10px] border-collapse">
+              <thead className="sticky top-0 bg-surf2 text-text-dark font-bold uppercase tracking-tight">
+                <tr>
+                  <th className="p-3 border-b border-border">Date</th>
+                  <th className="p-3 border-b border-border">Utilisateur</th>
+                  <th className="p-3 border-b border-border">Contexte</th>
+                  <th className="p-3 border-b border-border">Message</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {adminLogs.map(log => (
+                  <tr key={log.id} className="hover:bg-surf2/50 transition-colors">
+                    <td className="p-3 text-text-dim whitespace-nowrap">
+                      {new Date(log.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                    <td className="p-3 font-bold text-gold truncate max-w-[120px]">{log.user_email}</td>
+                    <td className="p-3"><span className="px-1.5 py-0.5 bg-surf3 rounded border border-border text-[9px]">{log.context}</span></td>
+                    <td className="p-3 text-text-dark">{log.message}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 text-center text-text-dark italic text-xs">
+              {loadingLogs ? 'Chargement des logs...' : 'Aucun log d\'audit disponible.'}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

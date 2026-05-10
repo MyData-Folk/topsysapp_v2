@@ -87,3 +87,25 @@ export async function revokeUser(userId: string): Promise<void> {
 
   if (error) throw new Error(`Erreur révocation : ${error.message}`)
 }
+
+export interface AdminLog {
+  id: string
+  created_at: string
+  user_email: string
+  level: string
+  context: string
+  message: string
+  metadata: any
+}
+
+export async function listAdminLogs(): Promise<AdminLog[]> {
+  const client = requireClient()
+  const { data, error } = await client
+    .from('admin_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  if (error) throw new Error(`Erreur logs admin : ${error.message}`)
+  return (data ?? []) as AdminLog[]
+}
