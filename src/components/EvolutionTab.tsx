@@ -184,19 +184,20 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
         return {
           snapshotLabel: snapLabel(s),
           rate: rate != null ? Math.round(rate * 10) / 10 : null,
-          incomplete: !hasRooms,
+          incomplete: !hasRooms || totalOcc === 0, // Considérer incomplet si 0 occupation totale (évite le décalage)
         };
       });
-      const validRates = bySnap.filter(b => b.rate != null);
-      if (validRates.length === 0) return null;
-      // Tendance : premier snapshot valide → dernier snapshot valide
-      const firstValid = validRates[0].rate!;
-      const lastValid = validRates[validRates.length - 1].rate!;
+      const validForTrend = bySnap.filter(b => b.rate !== null && !b.incomplete);
+      if (validForTrend.length === 0) return null;
+
+      // Tendance : premier snapshot complet → dernier snapshot complet
+      const firstValid = validForTrend[0].rate!;
+      const lastValid = validForTrend[validForTrend.length - 1].rate!;
       return {
         type: type.label,
         code: type.code,
         bySnap,
-        diff: lastValid - firstValid, // Récent - Ancien
+        diff: lastValid - firstValid, // Récent - Ancien (sur base complète)
       };
     }).filter(Boolean) as {
       type: string;
