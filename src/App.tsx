@@ -122,12 +122,20 @@ export default function App() {
         <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
       )}
 
-      {/* Pending gate — logged in but not yet approved */}
-      {!auth.loading && auth.user && !auth.isApproved && !skipAuth && (
+      {/* Profile loading state — logged in but profile not yet arrived */}
+      {!auth.loading && auth.user && auth.profile === null && !skipAuth && (
+        <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4">
+          <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          <p className="text-text-dim text-xs font-bold uppercase tracking-widest">Chargement de votre profil...</p>
+        </div>
+      )}
+
+      {/* Pending approval gate — logged in but not yet approved */}
+      {!auth.loading && auth.user && auth.profile !== null && !auth.isApproved && !skipAuth && (
         <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
       )}
 
-      {/* Loading spinner while auth resolves */}
+      {/* Initial loading spinner while auth resolves */}
       {auth.loading && (
         <div className="min-h-screen bg-bg flex items-center justify-center">
           <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
