@@ -36,6 +36,13 @@ function snapLabel(s: SnapshotWithDays) {
       : `Import ${new Date(s.import_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`;
 }
 
+// Étiquette détaillée
+function snapFullLabel(s: SnapshotWithDays) {
+  const edition = s.edition_date ? `Édition: ${s.edition_date}` : '';
+  const period = s.period_str ? `Période: ${s.period_str}` : '';
+  return [edition, period].filter(Boolean).join(' · ');
+}
+
 // Renvoie le min/max de date parmi tous les jours de snapshots chargés
 function dateRangeOfSnaps(snaps: SnapshotWithDays[]): { min: string; max: string } | null {
   const all = snaps.flatMap(s => s.days.map(d => d.date));
@@ -46,10 +53,10 @@ function dateRangeOfSnaps(snaps: SnapshotWithDays[]): { min: string; max: string
 export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabProps) {
   // ── État ────────────────────────────────────────────────────────────────────
   const today = new Date().toISOString().split('T')[0];
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+  const thirtyDaysLater = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
 
-  const [dateFrom, setDateFrom] = useState(thirtyDaysAgo);
-  const [dateTo, setDateTo] = useState(today);
+  const [dateFrom, setDateFrom] = useState(today);
+  const [dateTo, setDateTo] = useState(thirtyDaysLater);
   const [snapshots, setSnapshots] = useState<SnapshotWithDays[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -141,9 +148,12 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     const first = list[0];
     const last = list[list.length - 1];
     if (first.id === last.id) return [];
-    const dates = Array.from(
-      new Set([...first.days.map(d => d.date), ...last.days.map(d => d.date)])
-    ).sort();
+    const firstDates = new Set(first.days.map(d => d.date));
+    const lastDates = new Set(last.days.map(d => d.date));
+    const commonDates = Array.from(firstDates).filter(d => lastDates.has(d)).sort();
+
+    if (commonDates.length === 0) return [];
+    const dates = commonDates;
 
     return dates.map(date => {
       const d1 = first.days.find(d => d.date === date);
@@ -233,6 +243,10 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     };
   }, [snapshots]);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const dateRange = dateRangeOfSnaps(snapshots);
 
   // ── Rendu ───────────────────────────────────────────────────────────────────
@@ -301,6 +315,14 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               </button>
             )}
+            <button
+              onClick={handlePrint}
+              disabled={!loaded || snapshots.length < 1}
+              className="flex items-center justify-center gap-2 px-5 py-2 bg-surf2 border border-border text-text font-bold rounded-xl text-xs hover:border-gold/50 transition-all disabled:opacity-50 shrink-0"
+            >
+              <BarChart3 size={14} className="text-gold" />
+              Rapport PDF
+            </button>
           </div>
         )}
       </div>
@@ -330,6 +352,15 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                 Plage effective : <strong className="text-text">{fmtDate(dateRange.min)}</strong> → <strong className="text-text">{fmtDate(dateRange.max)}</strong> ·{' '}
                 <strong className="text-text">{kpis.snapshotsCount}</strong> snapshots ·{' '}
                 <strong className="text-text">{kpis.daysCount}</strong> jours communs
+              </span>
+            </div>
+          )}
+
+          {snapshots.length >= 2 && deltaChart.length === 0 && (
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-red/10 border border-red/20 rounded-xl text-xs text-red">
+              <AlertTriangle size={13} className="shrink-0" />
+              <span>
+                <strong>Attention :</strong> Les snapshots sélectionnés n'ont aucune date en commun et ne peuvent pas être comparés pour le calcul du delta.
               </span>
             </div>
           )}
@@ -508,10 +539,15 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                       const incomplete = !hasRoomsData(s);
                       return (
                         <th key={s.id} className={cn("p-3 text-center font-bold text-[10px]", incomplete && "opacity-50")}>
-                          <div className="flex items-center justify-center gap-1.5">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                            <span className="truncate max-w-[100px]">{snapLabel(s)}</span>
-                            {incomplete && <span className="text-amber" title="Snapshot sans données de rooms">⚠</span>}
+                          <div className="flex flex-col items-center justify-center gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                              <span className="truncate max-w-[100px]">{snapLabel(s)}</span>
+                              {incomplete && <span className="text-amber" title="Snapshot sans données de rooms">⚠</span>}
+                            </div>
+                            <span className="text-[8px] text-text-dark font-normal opacity-70">
+                              {s.period_str ? s.period_str.replace(/^du\s+/i, '') : ''}
+                            </span>
                           </div>
                         </th>
                       );

@@ -43,22 +43,36 @@ export function Header({
             <div className="hidden sm:block h-8 w-px bg-border mx-1" />
           </div>
 
-          <div className="relative group flex-1 sm:flex-initial min-w-[200px]">
-            <select
-              value={selectedHotelId || ''}
-              onChange={(e) => onHotelChange(e.target.value || null)}
-              className="w-full appearance-none bg-surf2 border border-border rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-text focus:border-gold focus:ring-1 focus:ring-gold/20 outline-none transition-all cursor-pointer"
-            >
-              <option value="">Tous les établissements</option>
-              {hotels.map(h => (
-                <option key={h.id} value={h.id}>{h.name}</option>
-              ))}
-            </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-dim group-hover:text-gold transition-colors">
-              <ChevronDown size={14} />
+          <div className="flex flex-col gap-1 min-w-[200px]">
+            <div className="relative group">
+              <select
+                value={selectedHotelId || ''}
+                onChange={(e) => onHotelChange(e.target.value || null)}
+                className={cn(
+                  "w-full appearance-none bg-surf2 border border-border rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-text focus:border-gold focus:ring-1 focus:ring-gold/20 outline-none transition-all cursor-pointer",
+                  !selectedHotelId && "text-gold border-gold/30 bg-gold/5"
+                )}
+              >
+                <option value="">Tous les établissements</option>
+                {hotels.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-dim group-hover:text-gold transition-colors">
+                <ChevronDown size={14} />
+              </div>
             </div>
+            <label className="flex items-center gap-2 px-1 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={!selectedHotelId}
+                onChange={(e) => onHotelChange(e.target.checked ? null : (hotels[0]?.id || null))}
+                className="w-3 h-3 rounded border-border text-gold focus:ring-gold bg-surf2 transition-all cursor-pointer"
+              />
+              <span className="text-[10px] font-bold text-text-dark group-hover:text-text transition-colors uppercase tracking-tight">Afficher tous les hôtels</span>
+            </label>
             {activeHotel && (
-              <p className="absolute -bottom-4 left-4 text-[9px] text-text-dark uppercase tracking-widest whitespace-nowrap">
+              <p className="text-[9px] text-text-dark uppercase tracking-widest truncate max-w-[250px] mt-1 opacity-60">
                 {activeHotel.address}
               </p>
             )}
