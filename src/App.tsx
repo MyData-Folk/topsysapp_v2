@@ -20,7 +20,7 @@ import { Toast } from './components/Toast';
 import { LoginScreen } from './components/LoginScreen';
 import { supabase } from './lib/supabaseClient';
 import { logger } from './utils/logger';
-import { loadCloudConfig } from './lib/supabaseStorage';
+import { loadCloudConfig, listReports, downloadReport } from './lib/supabaseStorage';
 import { DEFAULT_CONFIG } from './utils/constants';
 import { LogPanel } from './components/LogPanel';
 
@@ -50,13 +50,12 @@ export default function App() {
         store.updateConfig({ cloudSync: true });
       }
       
-      logger.info('App', 'Chargement de la config Cloud...');
+      // Chargement de la config Cloud
       loadCloudConfig().then(cloudConfig => {
         if (cloudConfig) {
           logger.info('App', 'Config Cloud appliquée');
           store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }));
           
-          // Hydratation des filtres si présents
           if ((cloudConfig as any).lastFilters) {
             const f = (cloudConfig as any).lastFilters;
             store.setFilters({
@@ -64,12 +63,32 @@ export default function App() {
               types: new Set(f.types || []),
               dows: new Set(f.dows || [0,1,2,3,4,5,6])
             });
-            logger.info('App', 'Filtres restaurés depuis le Cloud');
           }
         }
       }).catch(err => logger.error('App', 'Erreur Cloud Config', err));
+
+      // Chargement des rapports Cloud (Synchronisation)
+      listReports().then(async (cloudMetas) => {
+        if (cloudMetas.length > 0) {
+          logger.info('App', `${cloudMetas.length} rapports détectés sur le Cloud. Vérification des manquants...`);
+          for (const meta of cloudMetas) {
+            // On vérifie si on l'a déjà en local (par nom et période)
+            const exists = store.reports.some(r => r.periodStr === meta.period_str && r.establishmentName === meta.establishment_name);
+            if (!exists) {
+              try {
+                logger.debug('App', `Téléchargement du rapport manquant: ${meta.filename}`);
+                const data = await downloadReport(meta.id);
+                store.addReport(data);
+              } catch (e) {
+                logger.error('App', `Erreur sync rapport ${meta.id}`, e);
+              }
+            }
+          }
+          logger.info('App', 'Synchronisation des rapports terminée');
+        }
+      }).catch(err => logger.error('App', 'Erreur Sync Rapports', err));
     }
-  }, [auth.user]); 
+  }, [auth.user]);
 
   const handleNewHotelConfirm = async () => {
     if (!newHotelPrompt) return;
@@ -295,7 +314,7 @@ export default function App() {
           </footer>
 
           <Toast toast={store.toast} />
-          <LogPanel />
+          {auth.isAdmin && <LogPanel />}
         </div>
       )}
     </>
