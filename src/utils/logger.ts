@@ -5,7 +5,7 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
-  module: string; // Context
+  context: string;
   message: string;
   data?: any;
 }
@@ -27,11 +27,11 @@ class Logger {
     }
   }
 
-  private addLog(level: LogLevel, module: string, message: string, data?: any) {
+  private addLog(level: LogLevel, context: string, message: string, data?: any) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
-      module,
+      context,
       message,
       data: data ? this.sanitizeData(data) : undefined
     };
@@ -42,7 +42,7 @@ class Logger {
     
     if (process.env.NODE_ENV !== 'production') {
       const color = level === 'error' ? 'red' : level === 'warn' ? 'orange' : level === 'debug' ? 'gray' : 'blue';
-      console.log(`%c[${module}] ${message}`, `color: ${color}`, data || '');
+      console.log(`%c[${context}] ${message}`, `color: ${color}`, data || '');
     }
 
     // Push to Supabase if error or warn and user is logged in
@@ -62,7 +62,7 @@ class Logger {
           user_id: user.id,
           user_email: user.email,
           level: entry.level,
-          context: entry.module,
+          context: entry.context,
           message: entry.message,
           metadata: entry.data || {}
         });
@@ -77,10 +77,15 @@ class Logger {
     }
   }
 
-  debug(module: string, message: string, data?: any) { this.addLog('debug', module, message, data); }
-  info(module: string, message: string, data?: any) { this.addLog('info', module, message, data); }
-  warn(module: string, message: string, data?: any) { this.addLog('warn', module, message, data); }
-  error(module: string, message: string, data?: any) { this.addLog('error', module, message, data); }
+  debug(context: string, message: string, data?: any) { this.addLog('debug', context, message, data); }
+  info(context: string, message: string, data?: any) { this.addLog('info', context, message, data); }
+  warn(context: string, message: string, data?: any) { this.addLog('warn', context, message, data); }
+  error(context: string, message: string, data?: any) { this.addLog('error', context, message, data); }
+
+  clear() {
+    this.logs = [];
+    localStorage.removeItem(LOG_KEY);
+  }
 
   getLogs() { return this.logs; }
 

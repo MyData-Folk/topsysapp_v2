@@ -1,0 +1,68 @@
+[2026-05-10T06:16:24.435Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:24.438Z] [INFO] [undefined] Démarrage hydratation IndexedDB...
+[2026-05-10T06:16:24.454Z] [DEBUG] [undefined] IndexedDB vide
+[2026-05-10T06:16:24.455Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:24.465Z] [INFO] [undefined] Événement: INITIAL_SESSION
+[2026-05-10T06:16:24.465Z] [INFO] [undefined] Initialisation terminée
+[2026-05-10T06:16:24.465Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:27.382Z] [INFO] [undefined] Tentative connexion: galizilemgalizi@gmail.com
+[2026-05-10T06:16:27.610Z] [INFO] [undefined] Événement: SIGNED_IN
+[2026-05-10T06:16:27.610Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 2)
+[2026-05-10T06:16:27.611Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:27.628Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:16:27.628Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:16:27.632Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.131Z] [INFO] [undefined] 7 rapports trouvés
+[2026-05-10T06:16:28.131Z] [INFO] [undefined] 7 rapports détectés sur le Cloud. Vérification...
+[2026-05-10T06:16:28.131Z] [INFO] [undefined] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+[2026-05-10T06:16:28.132Z] [INFO] [undefined] Config Cloud appliquée
+[2026-05-10T06:16:28.132Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.176Z] [INFO] [undefined] 7 rapports trouvés
+[2026-05-10T06:16:28.316Z] [INFO] [undefined] Rapport ajouté: 1777973681187-iyadmc1d82k
+[2026-05-10T06:16:28.316Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.321Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.546Z] [INFO] [undefined] Rapport ajouté: 1778232791358-sxkyl6p1g0f
+[2026-05-10T06:16:28.546Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.551Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.650Z] [INFO] [undefined] Rapport ajouté: 1778165199727-21if3u5v9j
+[2026-05-10T06:16:28.650Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.653Z] [INFO] [undefined] Auto-sélection hôtel: HOTEL WASHINGTON OPERA
+[2026-05-10T06:16:28.653Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.786Z] [INFO] [undefined] Rapport ajouté: 1777973681187-iyadmc1d82k
+[2026-05-10T06:16:28.786Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.788Z] [INFO] [undefined] Auto-sélection hôtel: FOLKESTONE OPERA
+[2026-05-10T06:16:28.788Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.926Z] [INFO] [undefined] Rapport ajouté: c18c88df-3f6c-4e98-afad-890252bd8719
+[2026-05-10T06:16:28.926Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:28.928Z] [INFO] [undefined] Auto-sélection hôtel: VENDOME OPERA
+[2026-05-10T06:16:28.928Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:29.067Z] [INFO] [undefined] Rapport ajouté: bacfd5b3-ebc8-4215-a778-6ffba98452cb
+[2026-05-10T06:16:29.067Z] [INFO] [undefined] 7 rapports synchronisés depuis le Cloud
+[2026-05-10T06:16:29.067Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:29.069Z] [INFO] [undefined] Auto-sélection hôtel: FOLKESTONE OPERA
+[2026-05-10T06:16:29.069Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:31.118Z] [INFO] [undefined] Sauvegarde auto de la config et des filtres vers le Cloud...
+[2026-05-10T06:16:35.730Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:52.345Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:16:58.145Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:17:00.261Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:17:02.903Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:17:03.221Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:17:03.335Z] [INFO] [undefined] 7 rapports trouvés
+[2026-05-10T06:17:14.910Z] [INFO] [undefined] Événement: SIGNED_IN
+[2026-05-10T06:17:14.910Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 3)
+[2026-05-10T06:17:14.910Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:17:14.913Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:17:14.914Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:17:33.984Z] [INFO] [undefined] Événement: SIGNED_IN
+[2026-05-10T06:17:33.984Z] [DEBUG] [undefined] Démarrage fetch profil (ID: 4)
+[2026-05-10T06:17:33.985Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:17:33.986Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:17:48.081Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:18:12.257Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:18:12.575Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:18:16.630Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:18:16.938Z] [INFO] [undefined] Récupération de la liste des rapports...
+[2026-05-10T06:18:20.788Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:18:23.875Z] [DEBUG] [undefined] Render principal
+[2026-05-10T06:18:25.807Z] [DEBUG] [undefined] Render principal

@@ -52,6 +52,7 @@ export default function App() {
       
       // Chargement de la config Cloud
       loadCloudConfig().then(cloudConfig => {
+        logger.info('App', `Session active - Admin: ${auth.isAdmin ? 'OUI' : 'NON'}`);
         if (cloudConfig) {
           logger.info('App', 'Config Cloud appliquée');
           store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }));
@@ -76,9 +77,15 @@ export default function App() {
         if (cloudMetas.length > 0) {
           logger.info('App', `${cloudMetas.length} rapports détectés sur le Cloud. Vérification...`);
           let syncedCount = 0;
+          // On garde une trace locale des rapports qu'on est en train d'ajouter pour éviter les doublons
+          const alreadyAdding = new Set<string>();
+
           for (const meta of cloudMetas) {
-            const exists = store.reports.some(r => r.periodStr === meta.period_str && r.establishmentName === meta.establishment_name);
-            if (!exists) {
+            const signature = `${meta.period_str}-${meta.establishment_name}`;
+            const existsLocally = store.reports.some(r => r.periodStr === meta.period_str && r.establishmentName === meta.establishment_name);
+            
+            if (!existsLocally && !alreadyAdding.has(signature)) {
+              alreadyAdding.add(signature);
               try {
                 const data = await downloadReport(meta.id);
                 store.addReport(data);
@@ -89,6 +96,7 @@ export default function App() {
             }
           }
           if (syncedCount > 0) logger.info('App', `${syncedCount} rapports synchronisés depuis le Cloud`);
+          else logger.info('App', 'Tous les rapports Cloud sont déjà présents en local');
         }
       }).catch(err => logger.error('App', 'Erreur Sync Rapports', err));
     }
