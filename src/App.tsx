@@ -41,20 +41,23 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', store.config.theme);
   }, [store.config.theme]);
 
-  /* 
-  // Temporairement désactivé pour corriger le blocage de session
+  // Activation du CloudSync et chargement au login
   useEffect(() => {
-    if (auth.user && store.config.cloudSync) {
-      logger.info('App', 'Utilisateur connecté, chargement de la config Cloud...');
+    if (auth.user) {
+      // On active la synchro cloud d'office si on est connecté
+      if (!store.config.cloudSync) {
+        store.updateConfig({ cloudSync: true });
+      }
+      
+      logger.info('App', 'Chargement de la config Cloud...');
       loadCloudConfig().then(cloudConfig => {
         if (cloudConfig) {
-          logger.info('App', 'Configuration Cloud appliquée avec succès');
+          logger.info('App', 'Config Cloud appliquée');
           store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }));
         }
-      }).catch(err => logger.error('App', 'Erreur chargement Cloud config post-login', err));
+      }).catch(err => logger.error('App', 'Erreur Cloud Config', err));
     }
   }, [auth.user]); 
-  */
 
   const handleNewHotelConfirm = async () => {
     if (!newHotelPrompt) return;
@@ -122,19 +125,6 @@ export default function App() {
         <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
       )}
 
-      {/* Profile loading state — logged in but profile not yet arrived */}
-      {!auth.loading && auth.user && auth.profile === null && !skipAuth && (
-        <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4">
-          <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-          <p className="text-text-dim text-xs font-bold uppercase tracking-widest">Chargement de votre profil...</p>
-        </div>
-      )}
-
-      {/* Pending approval gate — logged in but not yet approved */}
-      {!auth.loading && auth.user && auth.profile !== null && !auth.isApproved && !skipAuth && (
-        <LoginScreen auth={auth} onSkip={() => setSkipAuth(true)} supabaseAvailable={supabase !== null} />
-      )}
-
       {/* Initial loading spinner while auth resolves */}
       {auth.loading && (
         <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -142,8 +132,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Main app — shown when approved or skipped */}
-      {!auth.loading && (auth.isApproved || skipAuth) && (
+      {/* Main app — shown when approved or skipped (or just logged in if profile is slow) */}
+      {!auth.loading && (auth.isApproved || skipAuth || (auth.user && auth.profile === null)) && (
         <div className="flex flex-col min-h-screen bg-bg font-sans selection:bg-gold/30">
           <Header
             hotel={store.activeHotel}
