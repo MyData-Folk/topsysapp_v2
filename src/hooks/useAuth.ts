@@ -77,13 +77,14 @@ export function useAuth(): AuthState {
       return 
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const u = session?.user ?? null
       logger.info('Auth', `Événement: ${event}`, { userId: u?.id, email: u?.email });
       setUser(u)
 
       if (u) {
-        loadProfile(u.id, event === 'SIGNED_IN')
+        // On attend que le profil soit chargé avant de terminer l'initialisation
+        await loadProfile(u.id, event === 'SIGNED_IN')
       } else {
         fetchIdRef.current++
         setProfile(null)
