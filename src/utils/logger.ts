@@ -1,9 +1,11 @@
+import { supabase } from '../lib/supabaseClient';
+
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
-interface LogEntry {
+export interface LogEntry {
   timestamp: string;
   level: LogLevel;
-  module: string;
+  module: string; // Context
   message: string;
   data?: any;
 }
@@ -42,6 +44,29 @@ class Logger {
       const color = level === 'error' ? 'red' : level === 'warn' ? 'orange' : level === 'debug' ? 'gray' : 'blue';
       console.log(`%c[${module}] ${message}`, `color: ${color}`, data || '');
     }
+
+    // Push to Supabase if error or warn and user is logged in
+    if ((level === 'error' || level === 'warn' || level === 'info') && supabase) {
+      this.pushToCloud(entry);
+    }
+  }
+
+  private async pushToCloud(entry: LogEntry) {
+    try {
+      const { data: { user } } = await supabase!.auth.getUser();
+      if (!user) return;
+
+      await supabase!
+        .from('app_logs')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          level: entry.level,
+          context: entry.module,
+          message: entry.message,
+          metadata: entry.data || {}
+        });
+    } catch { /* Silent fail for logs */ }
   }
 
   private sanitizeData(data: any): any {

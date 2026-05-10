@@ -59,6 +59,7 @@ export const DEFAULT_FILTERS: FilterState = {
 
 export function useAppStore() {
   const [config, setConfig] = useState<AppConfig>(loadConfig);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [reports, setReports] = useState<OccupancyData[]>([]);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('import');
@@ -86,7 +87,11 @@ export function useAppStore() {
       } else {
         logger.debug('Store', 'IndexedDB vide');
       }
-    }).catch(err => logger.error('Store', 'Erreur hydratation IndexedDB', err));
+      setIsHydrated(true);
+    }).catch(err => {
+      logger.error('Store', 'Erreur hydratation IndexedDB', err);
+      setIsHydrated(true);
+    });
   }, []);
 
   // Persist config to localStorage
@@ -202,13 +207,19 @@ export function useAppStore() {
   }, []);
 
   const deleteHotel = useCallback((id: string) => {
-    if (config.hotels.length <= 1) return;
-    logger.info('Store', `Suppression hôtel: ${id}`);
+    if (config.hotels.length <= 1) {
+      logger.warn('Store', 'Impossible de supprimer le dernier établissement');
+      return;
+    }
+    
+    logger.info('Store', `Suppression établissement: ${id}`);
     setConfig(prev => {
       const filtered = prev.hotels.filter(h => h.id !== id);
-      return { ...prev, hotels: filtered, selectedHotelId: filtered[0].id };
+      // Si on supprime l'hôtel actif, on bascule sur le premier restant
+      const newSelected = prev.selectedHotelId === id ? filtered[0].id : prev.selectedHotelId;
+      return { ...prev, hotels: filtered, selectedHotelId: newSelected };
     });
-  }, [config.hotels.length]);
+  }, [config.hotels.length, config.selectedHotelId]);
 
   const resetFilters = useCallback(() => {
     setFilters({ ...DEFAULT_FILTERS, types: new Set(), dows: new Set([0, 1, 2, 3, 4, 5, 6]) });
@@ -220,6 +231,7 @@ export function useAppStore() {
 
   return {
     config, setConfig, updateConfig,
+    isHydrated,
     reports, setReports, addReport, deleteReport,
     selectedReportId, setSelectedReportId,
     activeTab, setActiveTab,
