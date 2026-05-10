@@ -256,3 +256,13 @@ export async function fetchDayEvolution(
     day: enrichDay(row),
   }))
 }
+
+export async function deleteSnapshot(snapshotId: string): Promise<void> {
+  const client = requireClient()
+  const { error } = await client
+    .from('availability_snapshots')
+    .delete()
+    .eq('id', snapshotId)
+
+  if (error) throw new Error(`Erreur suppression snapshot : ${error.message}`)
+}
