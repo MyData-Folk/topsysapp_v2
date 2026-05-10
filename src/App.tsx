@@ -42,6 +42,13 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', store.config.theme);
   }, [store.config.theme]);
 
+  // Log de diagnostic précis quand le profil change
+  useEffect(() => {
+    if (auth.user && auth.profile) {
+      logger.info('App', `Profil chargé - Rôle: ${auth.profile.role} - Admin: ${auth.isAdmin ? 'OUI' : 'NON'}`);
+    }
+  }, [auth.profile]);
+
   // Activation du CloudSync et chargement au login
   useEffect(() => {
     if (auth.user) {
@@ -55,7 +62,6 @@ export default function App() {
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_CLOUD')), 5000));
 
       Promise.race([cloudPromise, timeoutPromise]).then(cloudConfig => {
-        logger.info('App', `Session active - Admin: ${auth.isAdmin ? 'OUI' : 'NON'}`);
         if (cloudConfig) {
           logger.info('App', 'Config Cloud appliquée');
           store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig as any, cloudSync: true }));

@@ -121,17 +121,27 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
     }
   };
 
+  const [cloudSaveSuccess, setCloudSaveSuccess] = useState(false);
+
   const handleSaveConfig = async () => {
-    setSavingCloud(true)
+    setSavingCloud(true);
+    setCloudSaveSuccess(false);
+    
+    // Timeout de 10s pour éviter le spin infini
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 10000));
+    
     try {
-      await saveConfig(config)
-      onShowToast('Configuration sauvegardée dans le cloud')
+      await Promise.race([saveConfig(config), timeout]);
+      onShowToast('Configuration sauvegardée dans le cloud');
+      setCloudSaveSuccess(true);
+      setTimeout(() => setCloudSaveSuccess(false), 3000);
     } catch (e) {
-      onShowToast(e instanceof Error ? e.message : 'Erreur inconnue', 'error')
+      const msg = e instanceof Error && e.message === 'TIMEOUT' ? 'Délai de sauvegarde dépassé' : (e instanceof Error ? e.message : 'Erreur inconnue');
+      onShowToast(msg, 'error');
     } finally {
-      setSavingCloud(false)
+      setSavingCloud(false);
     }
-  }
+  };
 
   const handleRegisterHotel = async () => {
     setRegisteringHotel(true)
@@ -321,12 +331,21 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
                       <button
                         onClick={handleSaveConfig}
                         disabled={savingCloud}
-                        className="flex items-center justify-center gap-1.5 p-2.5 bg-gold/10 text-gold border border-gold/20 rounded-xl text-[11px] font-bold hover:bg-gold/20 transition-all disabled:opacity-50"
+                        className={cn(
+                          "flex items-center justify-center gap-1.5 p-2.5 border rounded-xl text-[11px] font-bold transition-all disabled:opacity-50",
+                          cloudSaveSuccess 
+                            ? "bg-green/20 text-green border-green/40 shadow-[0_0_10px_rgba(34,197,94,0.2)]" 
+                            : "bg-gold/10 text-gold border-gold/20 hover:bg-gold/20"
+                        )}
                       >
-                        {savingCloud
-                          ? <div className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin" />
-                          : <Cloud size={12} />}
-                        Sauvegarder
+                        {savingCloud ? (
+                          <div className="w-3 h-3 border border-gold border-t-transparent rounded-full animate-spin" />
+                        ) : cloudSaveSuccess ? (
+                          <CheckCircle2 size={12} />
+                        ) : (
+                          <Cloud size={12} />
+                        )}
+                        {cloudSaveSuccess ? 'Sauvegardé !' : 'Sauvegarder'}
                       </button>
                       <button
                         onClick={handleLoadConfig}
