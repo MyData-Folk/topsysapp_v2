@@ -269,6 +269,11 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
                   </div>
                 )}
               </div>
+            ) : (
+              <div className="bg-surf1 border border-border rounded-2xl p-5 border-dashed text-center opacity-70">
+                <Cloud size={24} className="mx-auto mb-3 text-text-dark" />
+                <p className="text-xs text-text-dim">Connectez-vous pour publier ces rapports sur le Cloud.</p>
+              </div>
             )}
 
             {/* Charts */}
