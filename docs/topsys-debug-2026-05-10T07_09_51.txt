@@ -1,0 +1,83 @@
+[2026-05-10T07:09:14.729Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T07:09:15.049Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:09:18.816Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T07:09:21.733Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "evolution"
+}
+---
+[2026-05-10T07:09:23.799Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "settings"
+}
+---
+[2026-05-10T07:09:33.518Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T07:09:33.834Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T07:09:39.255Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T07:09:42.256Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "cloud"
+}
+---
+[2026-05-10T07:09:45.630Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "admin"
+}
+---
+[2026-05-10T07:09:48.176Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "help"
+}
+---
+[2026-05-10T07:09:49.281Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "admin"
+}

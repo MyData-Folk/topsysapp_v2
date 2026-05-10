@@ -159,8 +159,12 @@ export function useAuth(): AuthState {
     setProfile(null)
     
     try {
-      // 2. Déconnexion Supabase (peut échouer si token déjà expiré)
-      await supabase.auth.signOut().catch(() => {});
+      // 2. Déconnexion Supabase avec timeout strict de 2s
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_SIGNOUT')), 2000));
+      await Promise.race([signOutPromise, timeoutPromise]).catch(() => {
+        logger.warn('Auth', 'Supabase signOut a échoué ou expiré, on force le nettoyage.');
+      });
       
       // 3. Nettoyage FORCÉ de TOUT le localStorage lié à l'app et à Supabase
       localStorage.removeItem('supabase.auth.token');
