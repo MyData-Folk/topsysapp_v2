@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG, DEFAULT_HOTEL, DEFAULT_IGNORE_PREFIXES } from '../utils
 import { loadCloudConfig } from '../lib/supabaseStorage';
 import { supabase } from '../lib/supabaseClient';
 import { hydrateReport } from '../utils/helpers';
+import { logger } from '../utils/logger';
 
 const IDB_KEY = 'hotel_analyzer_reports_v2';
 const LS_KEY = 'hotel_analyzer_config';
@@ -77,11 +78,15 @@ export function useAppStore() {
 
   // Load reports from IndexedDB
   useEffect(() => {
+    logger.info('Store', 'Démarrage hydratation IndexedDB...');
     get(IDB_KEY).then(saved => {
       if (saved && Array.isArray(saved)) {
+        logger.info('Store', `${saved.length} rapports chargés depuis IndexedDB`);
         setReports(saved.map(hydrateReport));
+      } else {
+        logger.debug('Store', 'IndexedDB vide');
       }
-    }).catch(console.error);
+    }).catch(err => logger.error('Store', 'Erreur hydratation IndexedDB', err));
   }, []);
 
   // Chargement cloud au démarrage si cloudSync activé
@@ -90,21 +95,20 @@ export function useAppStore() {
     if (!supabase) return
 
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) return
+      if (!data.user) {
+        logger.debug('Store', 'CloudSync: Pas d\'utilisateur');
+        return
+      }
+      logger.info('Store', 'Démarrage CloudSync...');
       loadCloudConfig()
         .then(cloudConfig => {
           if (cloudConfig) {
+            logger.info('Store', 'Config Cloud appliquée');
             setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }))
           }
         })
-        .catch((e: unknown) => {
-          console.warn('[cloud] Échec chargement config:', e instanceof Error ? e.message : e)
-          setError('Synchronisation cloud indisponible au démarrage')
-          setTimeout(() => setError(null), 5000)
-        })
-    }).catch((e: unknown) => {
-      console.warn('[cloud] Échec auth au démarrage:', e instanceof Error ? e.message : e)
-    })
+        .catch(err => logger.error('Store', 'Échec chargement config cloud', err))
+    }).catch(err => logger.error('Store', 'Échec auth cloud', err))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist config to localStorage
@@ -115,13 +119,11 @@ export function useAppStore() {
   // Persist reports to IndexedDB
   useEffect(() => {
     if (config.autoSave && reports.length > 0) {
-      set(IDB_KEY, reports);
+      set(IDB_KEY, reports).catch(err => logger.error('Store', 'Erreur persistance reports', err));
     }
   }, [reports, config.autoSave]);
 
   // Auto-select hotel when report changes
-  // Use functional setter so config is read inside the setter (avoids stale closure
-  // and prevents an infinite loop where setConfig → config change → effect re-fires)
   useEffect(() => {
     if (!activeReport?.establishmentName) return;
     setConfig(prev => {
@@ -130,9 +132,10 @@ export function useAppStore() {
         activeReport.establishmentName!.toLowerCase().includes(h.name.toLowerCase())
       );
       if (match && match.id !== prev.selectedHotelId) {
+        logger.info('Store', `Auto-sélection hôtel: ${match.name}`);
         return { ...prev, selectedHotelId: match.id };
       }
-      return prev; // identical reference → no re-render
+      return prev;
     });
   }, [activeReport?.id, activeReport?.establishmentName]);
 
@@ -152,11 +155,15 @@ export function useAppStore() {
       if (duplicate) return prev;
       return [report, ...prev];
     });
-    if (!duplicate) setSelectedReportId(report.id);
+    if (!duplicate) {
+      logger.info('Store', `Rapport ajouté: ${report.id}`);
+      setSelectedReportId(report.id);
+    }
     return !duplicate;
   }, []);
 
   const deleteReport = useCallback((id: string) => {
+    logger.info('Store', `Suppression rapport: ${id}`);
     setReports(prev => prev.filter(r => r.id !== id));
     setPdfFiles(prev => { const n = { ...prev }; delete n[id]; return n; });
     if (selectedReportId === id) setSelectedReportId(null);
@@ -176,6 +183,7 @@ export function useAppStore() {
   }, []);
 
   const addHotel = useCallback((hotel: HotelConfig) => {
+    logger.info('Store', `Ajout hôtel: ${hotel.name}`);
     setConfig(prev => ({
       ...prev,
       hotels: [...prev.hotels, hotel],
@@ -185,6 +193,7 @@ export function useAppStore() {
 
   const deleteHotel = useCallback((id: string) => {
     if (config.hotels.length <= 1) return;
+    logger.info('Store', `Suppression hôtel: ${id}`);
     setConfig(prev => {
       const filtered = prev.hotels.filter(h => h.id !== id);
       return { ...prev, hotels: filtered, selectedHotelId: filtered[0].id };

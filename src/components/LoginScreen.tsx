@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { Mail, Lock, Cloud, AlertCircle, Clock } from 'lucide-react'
 import { AuthState } from '../hooks/useAuth'
+import { logger } from '../utils/logger'
 
 interface LoginScreenProps {
   auth: AuthState
@@ -156,12 +157,21 @@ export function LoginScreen({ auth, onSkip, supabaseAvailable }: LoginScreenProp
           </div>
         )}
 
-        {/* Skip button */}
+        {/* Skip button & Diagnostic */}
         {!signedUp && auth.profile?.role !== 'pending' && (
-          <div className="text-center">
+          <div className="text-center space-y-4">
             <button onClick={onSkip} className="text-sm text-text-dim hover:text-text transition-colors">
               Continuer sans compte →
             </button>
+            
+            <div className="pt-4 border-t border-border/50">
+              <button
+                onClick={() => logger.exportReport()}
+                className="text-[10px] text-text-dark hover:text-gold uppercase tracking-widest font-bold transition-colors flex items-center justify-center gap-2 mx-auto"
+              >
+                <AlertCircle size={10} /> Générer un rapport de diagnostic
+              </button>
+            </div>
           </div>
         )}
       </motion.div>

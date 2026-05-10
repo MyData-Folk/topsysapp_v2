@@ -7,6 +7,7 @@ import { hydrateReport } from '../utils/helpers';
 import { DEFAULT_HOTEL } from '../utils/constants';
 import { AuthState } from '../hooks/useAuth';
 import { listReports, downloadReport, generateReportFilename, CloudReportMeta } from '../lib/supabaseStorage';
+import { logger } from '../utils/logger';
 
 interface ImportTabProps {
   config: AppConfig;
@@ -100,6 +101,7 @@ export function ImportTab({
 
     onSetLoading(true);
     onSetError(null);
+    logger.info('Import', `Début traitement fichier: ${file.name}`, { size: file.size, type: file.type });
     try {
       if (file.name.endsWith('.json')) {
         const text = await file.text();

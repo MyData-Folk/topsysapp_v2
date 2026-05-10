@@ -19,6 +19,7 @@ import { HotelWizard } from './components/HotelWizard';
 import { Toast } from './components/Toast';
 import { LoginScreen } from './components/LoginScreen';
 import { supabase } from './lib/supabaseClient';
+import { logger } from './utils/logger';
 
 export default function App() {
   const store = useAppStore();
@@ -26,6 +27,13 @@ export default function App() {
   const [skipAuth, setSkipAuth] = useState(false);
   const [newHotelPrompt, setNewHotelPrompt] = useState<{ name: string; buffer: ArrayBuffer } | null>(null);
   const [showWizard, setShowWizard] = useState(false);
+
+  logger.debug('App', 'Render principal', {
+    authLoading: auth.loading,
+    hasUser: !!auth.user,
+    isApproved: auth.isApproved,
+    activeTab: store.activeTab
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', store.config.theme);
