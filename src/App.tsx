@@ -41,7 +41,8 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', store.config.theme);
   }, [store.config.theme]);
 
-  // Chargement de la config Cloud lors de la connexion
+  /* 
+  // Temporairement désactivé pour corriger le blocage de session
   useEffect(() => {
     if (auth.user && store.config.cloudSync) {
       logger.info('App', 'Utilisateur connecté, chargement de la config Cloud...');
@@ -52,7 +53,8 @@ export default function App() {
         }
       }).catch(err => logger.error('App', 'Erreur chargement Cloud config post-login', err));
     }
-  }, [auth.user]); // Se déclenche quand auth.user change
+  }, [auth.user]); 
+  */
 
   const handleNewHotelConfirm = async () => {
     if (!newHotelPrompt) return;
