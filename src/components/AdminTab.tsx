@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ShieldCheck, Clock, UserCheck, UserX, Crown, RefreshCw, AlertCircle, Users } from 'lucide-react'
 import { AuthState } from '../hooks/useAuth'
-import { listPendingUsers, approveUser, rejectUser, promoteToAdmin, revokeUser, UserProfile, AdminLog, listAdminLogs } from '../lib/adminStorage'
+import { listPendingUsers, approveUser, rejectUser, promoteToAdmin, revokeUser, UserProfile, AdminLog, listAdminLogs, clearAllLogs } from '../lib/adminStorage'
 import { cn } from '../utils/cn'
-import { Terminal, Download } from 'lucide-react'
+import { Terminal, Download, Trash2 } from 'lucide-react'
 
 interface AdminTabProps {
   auth: AuthState
@@ -199,21 +199,51 @@ export function AdminTab({ auth, onShowToast }: AdminTabProps) {
 
       {/* Logs d'audit */}
       <div className="bg-surf1 border border-border rounded-2xl overflow-hidden">
-        <div className="p-5 flex items-center justify-between border-b border-border">
+        <div className="p-5 flex items-center justify-between border-b border-border flex-wrap gap-3">
           <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest flex items-center gap-2">
-            <Terminal size={12} /> Logs d'Audit Système (Cloud)
+            <Terminal size={12} /> Logs Système Centralisés
           </h3>
-          <button onClick={fetchLogs} disabled={loadingLogs}
-            className="p-1.5 text-text-dark hover:text-gold transition-all">
-            <RefreshCw size={12} className={loadingLogs ? 'animate-spin' : ''} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => {
+              const report = {
+                app: 'TopsysExplorer V2 (Admin Global Logs)',
+                time: new Date().toISOString(),
+                logs: adminLogs
+              };
+              const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `topsys-global-logs-${new Date().getTime()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+              onShowToast('Logs téléchargés');
+            }}
+              disabled={adminLogs.length === 0}
+              className="p-1.5 text-text-dark hover:text-blue hover:bg-blue/10 rounded-lg transition-all" title="Sauvegarder tous les logs">
+              <Download size={13} />
+            </button>
+            <button onClick={() => {
+              if(confirm("Vider définitivement TOUS les logs du Cloud ? Cette action est irréversible.")) {
+                 runAction(() => clearAllLogs().then(fetchLogs), "Historique des logs vidé");
+              }
+            }}
+              disabled={adminLogs.length === 0}
+              className="p-1.5 text-text-dark hover:text-red hover:bg-red/10 rounded-lg transition-all" title="Vider l'historique">
+              <Trash2 size={13} />
+            </button>
+            <button onClick={fetchLogs} disabled={loadingLogs}
+              className="p-1.5 text-text-dark hover:text-gold hover:bg-gold/10 rounded-lg transition-all" title="Rafraîchir">
+              <RefreshCw size={13} className={loadingLogs ? 'animate-spin' : ''} />
+            </button>
+          </div>
         </div>
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
           {adminLogs.length > 0 ? (
             <table className="w-full text-left text-[10px] border-collapse">
-              <thead className="sticky top-0 bg-surf2 text-text-dark font-bold uppercase tracking-tight">
+              <thead className="sticky top-0 bg-surf2 text-text-dark font-bold uppercase tracking-tight z-10 shadow-sm">
                 <tr>
-                  <th className="p-3 border-b border-border">Date</th>
+                  <th className="p-3 border-b border-border">Heure</th>
                   <th className="p-3 border-b border-border">Utilisateur</th>
                   <th className="p-3 border-b border-border">Contexte</th>
                   <th className="p-3 border-b border-border">Message</th>
@@ -223,11 +253,22 @@ export function AdminTab({ auth, onShowToast }: AdminTabProps) {
                 {adminLogs.map(log => (
                   <tr key={log.id} className="hover:bg-surf2/50 transition-colors">
                     <td className="p-3 text-text-dim whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(log.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </td>
-                    <td className="p-3 font-bold text-gold truncate max-w-[120px]">{log.user_email}</td>
-                    <td className="p-3"><span className="px-1.5 py-0.5 bg-surf3 rounded border border-border text-[9px]">{log.context}</span></td>
-                    <td className="p-3 text-text-dark">{log.message}</td>
+                    <td className="p-3 font-bold text-gold truncate max-w-[120px]" title={log.user_email}>{log.user_email}</td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-1">
+                        <span className={cn("px-1.5 py-0.5 rounded border text-[9px] uppercase", 
+                          log.level === 'error' ? 'bg-red/10 text-red border-red/20' : 
+                          log.level === 'warn' ? 'bg-amber/10 text-amber border-amber/20' : 
+                          log.level === 'info' ? 'bg-blue/10 text-blue border-blue/20' : 
+                          'bg-surf3 border-border text-text-dim')}>
+                          {log.level}
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-surf3 rounded border border-border text-[9px]">{log.context}</span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-text-dark max-w-[200px] break-words">{log.message}</td>
                   </tr>
                 ))}
               </tbody>

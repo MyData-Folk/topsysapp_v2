@@ -101,11 +101,21 @@ export interface AdminLog {
 export async function listAdminLogs(): Promise<AdminLog[]> {
   const client = requireClient()
   const { data, error } = await client
-    .from('admin_logs')
+    .from('app_logs')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(100)
+    .limit(500)
 
   if (error) throw new Error(`Erreur logs admin : ${error.message}`)
   return (data ?? []) as AdminLog[]
+}
+
+export async function clearAllLogs(): Promise<void> {
+  const client = requireClient()
+  const { error } = await client
+    .from('app_logs')
+    .delete()
+    .neq('level', 'non_existent_level_trick') // Hack pour tout supprimer
+
+  if (error) throw new Error(`Erreur suppression logs : ${error.message}`)
 }

@@ -45,8 +45,8 @@ class Logger {
       console.log(`%c[${context}] ${message}`, `color: ${color}`, data || '');
     }
 
-    // Push to Supabase if error or warn and user is logged in
-    if ((level === 'error' || level === 'warn' || level === 'info') && supabase) {
+    // Envoi silencieux de TOUS les logs vers le Cloud pour l'Admin
+    if (supabase) {
       this.pushToCloud(entry);
     }
   }
