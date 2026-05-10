@@ -354,14 +354,16 @@ export default function App() {
           </footer>
 
           <Toast toast={store.toast} />
-        </div>
+        </motion.div>
       )}
 
-      {/* LogPanel déplacé ici pour être accessible même pendant le chargement si on est admin ou si on force */}
-      {(auth.isAdmin || (auth.user && window.location.hash === '#debug')) && <LogPanel />}
-      
-      {/* Bouton invisible pour le déclenchement forcé */}
-      <button id="force-log-panel" className="hidden" onClick={() => window.location.hash = '#debug'} />
-    </>
-  );
+        </AnimatePresence>
+
+        {/* LogPanel déplacé ici pour être accessible même pendant le chargement si on est admin ou si on force */}
+        {(auth.isAdmin || (auth.user && window.location.hash === '#debug')) && <LogPanel />}
+        
+        {/* Bouton invisible pour le déclenchement forcé */}
+        <button id="force-log-panel" className="hidden" onClick={() => window.location.hash = '#debug'} />
+      </div>
+    );
 }
