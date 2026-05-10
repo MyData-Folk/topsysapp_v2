@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight,
-  BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle,
+  BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle, Trash2
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { AppConfig, HotelConfig } from '../types';
 import { AuthState } from '../hooks/useAuth';
-import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability } from '../lib/availabilitiesStorage';
+import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, dateRangeOfSnaps, deleteSnapshot } from '../lib/availabilitiesStorage';
 import { cn } from '../utils/cn';
 
 interface EvolutionTabProps {
@@ -245,6 +245,17 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDeleteSnapshot = async (id: string) => {
+    if (!window.confirm('Voulez-vous vraiment supprimer (dépublier) ce rapport du Cloud ?')) return;
+    try {
+      await deleteSnapshot(id);
+      onShowToast?.('Rapport supprimé avec succès', 'ok');
+      handleRefresh();
+    } catch (err: any) {
+      onShowToast?.(err.message, 'error');
+    }
   };
 
   const dateRange = dateRangeOfSnaps(snapshots);
@@ -538,7 +549,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                     {snapshots.map((s, i) => {
                       const incomplete = !hasRoomsData(s);
                       return (
-                        <th key={s.id} className={cn("p-3 text-center font-bold text-[10px]", incomplete && "opacity-50")}>
+                        <th key={s.id} className={cn("p-3 text-center font-bold text-[10px]", incomplete && "opacity-50 group/snap relative")}>
                           <div className="flex flex-col items-center justify-center gap-0.5">
                             <div className="flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
@@ -549,6 +560,15 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                               {s.period_str ? s.period_str.replace(/^du\s+/i, '') : ''}
                             </span>
                           </div>
+                          
+                          {/* Bouton de suppression au survol */}
+                          <button
+                            onClick={() => handleDeleteSnapshot(s.id)}
+                            className="absolute -top-1 -right-1 p-1 bg-red/10 text-red rounded-md opacity-0 group-hover/snap:opacity-100 transition-opacity hover:bg-red/20"
+                            title="Supprimer ce snapshot du Cloud"
+                          >
+                            <Trash2 size={10} />
+                          </button>
                         </th>
                       );
                     })}

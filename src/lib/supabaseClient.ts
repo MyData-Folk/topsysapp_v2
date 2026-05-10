@@ -10,7 +10,7 @@ export const supabase: SupabaseClient | null = (url && key)
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storage: window.sessionStorage
+        storage: window.localStorage
       },
       global: {
         headers: { 'x-application-name': 'topsys-explorer-v2' }

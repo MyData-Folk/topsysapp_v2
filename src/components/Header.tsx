@@ -47,13 +47,13 @@ export function Header({
             <div className="relative group">
               <select
                 value={selectedHotelId || ''}
-                onChange={(e) => onHotelChange(e.target.value || null)}
+                onChange={(e) => onHotelChange(e.target.value)}
                 className={cn(
                   "w-full appearance-none bg-surf2 border border-border rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-text focus:border-gold focus:ring-1 focus:ring-gold/20 outline-none transition-all cursor-pointer",
                   !selectedHotelId && "text-gold border-gold/30 bg-gold/5"
                 )}
               >
-                <option value="">Tous les établissements</option>
+                {!selectedHotelId && <option value="">(Mode Global Actif)</option>}
                 {hotels.map(h => (
                   <option key={h.id} value={h.id}>{h.name}</option>
                 ))}
