@@ -50,12 +50,15 @@ export default function App() {
         store.updateConfig({ cloudSync: true });
       }
       
-      // Chargement de la config Cloud
-      loadCloudConfig().then(cloudConfig => {
+      // Chargement de la config Cloud avec timeout de 5s
+      const cloudPromise = loadCloudConfig();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_CLOUD')), 5000));
+
+      Promise.race([cloudPromise, timeoutPromise]).then(cloudConfig => {
         logger.info('App', `Session active - Admin: ${auth.isAdmin ? 'OUI' : 'NON'}`);
         if (cloudConfig) {
           logger.info('App', 'Config Cloud appliquée');
-          store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig, cloudSync: true }));
+          store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig as any, cloudSync: true }));
           
           if ((cloudConfig as any).lastFilters) {
             const f = (cloudConfig as any).lastFilters;
@@ -66,7 +69,13 @@ export default function App() {
             });
           }
         }
-      }).catch(err => logger.error('App', 'Erreur Cloud Config', err));
+      }).catch(err => {
+        if (err.message === 'TIMEOUT_CLOUD') {
+          logger.warn('App', 'Chargement Cloud trop long, continuation avec local');
+        } else {
+          logger.error('App', 'Erreur Cloud Config', err);
+        }
+      });
     }
   }, [auth.user]);
 
@@ -170,8 +179,24 @@ export default function App() {
 
       {/* Initial loading spinner while auth resolves */}
       {auth.loading && (
-        <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-6">
           <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-xs text-text-dim animate-pulse">Initialisation de la session...</p>
+            {/* Bouton de secours pour les admins en cas de freeze */}
+            {auth.user && (
+              <button 
+                onClick={() => {
+                  // On simule un admin pour forcer l'affichage si ça bloque
+                  const el = document.getElementById('force-log-panel');
+                  if (el) el.click();
+                }}
+                className="mt-8 px-4 py-2 bg-surf2 border border-border rounded-xl text-[10px] font-bold text-text-dark hover:text-gold transition-all"
+              >
+                DIAGNOSTIC (FORCE)
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -326,9 +351,14 @@ export default function App() {
           </footer>
 
           <Toast toast={store.toast} />
-          {auth.isAdmin && <LogPanel />}
         </div>
       )}
+
+      {/* LogPanel déplacé ici pour être accessible même pendant le chargement si on est admin ou si on force */}
+      {(auth.isAdmin || (auth.user && window.location.hash === '#debug')) && <LogPanel />}
+      
+      {/* Bouton invisible pour le déclenchement forcé */}
+      <button id="force-log-panel" className="hidden" onClick={() => window.location.hash = '#debug'} />
     </>
   );
 }
