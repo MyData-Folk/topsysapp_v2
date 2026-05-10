@@ -84,6 +84,14 @@
   @apply bg-border rounded-full hover:bg-border-hover;
 }
 
-[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background: #b8c0d4;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
