@@ -473,12 +473,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                       tickFormatter={v => `${v > 0 ? '+' : ''}${v}%`} />
                     <Tooltip
                       contentStyle={{ backgroundColor: 'var(--theme-surf1)', border: '1px solid var(--theme-border)', borderRadius: '12px' }}
-                      formatter={(v: number, key: string) => [
-                        key === 'delta'
-                          ? `${v > 0 ? '+' : ''}${v.toFixed(1)}%`
-                          : `${v > 0 ? '+' : ''}${v} ch.`,
-                        key === 'delta' ? 'Δ Taux' : 'Δ Occupées',
-                      ]}
+                      formatter={(v: number) => [`${v > 0 ? '+' : ''}${v.toFixed(1)}%`, 'Variation Taux']}
                       labelStyle={{ color: 'var(--theme-text-dim)', fontSize: '10px' }}
                     />
                     <Bar dataKey="delta" radius={[4, 4, 0, 0]} name="Δ Taux"

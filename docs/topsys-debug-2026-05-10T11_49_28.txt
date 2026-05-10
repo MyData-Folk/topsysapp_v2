@@ -1,0 +1,278 @@
+[2026-05-10T11:44:36.409Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:36.426Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T11:44:36.432Z] [DEBUG] [Store] IndexedDB vide
+---
+[2026-05-10T11:44:36.433Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": true,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:36.450Z] [INFO] [Auth] Événement: INITIAL_SESSION
+DATA: {}
+---
+[2026-05-10T11:44:36.450Z] [INFO] [Auth] Initialisation terminée
+---
+[2026-05-10T11:44:36.450Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": false,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:39.668Z] [INFO] [Auth] Tentative connexion: galizilemgalizi@gmail.com
+---
+[2026-05-10T11:44:39.995Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T11:44:39.995Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 2)
+---
+[2026-05-10T11:44:39.996Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:39.998Z] [INFO] [App] Session active - Les rapports Cloud sont disponibles dans l'onglet Import
+---
+[2026-05-10T11:44:39.998Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": false,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:40.014Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T11:44:40.520Z] [INFO] [Auth] Profil récupéré pour 4401324f-66ff-4290-8e13-cc9ef254dcf6
+DATA: {
+  "id": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com",
+  "role": "admin",
+  "approved_by": null,
+  "approved_at": "2026-05-08T15:50:18.691242+00:00",
+  "created_at": "2026-05-05T06:03:26.752293+00:00"
+}
+---
+[2026-05-10T11:44:40.521Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:40.524Z] [INFO] [App] Profil chargé - Rôle: admin - Admin: OUI
+---
+[2026-05-10T11:44:40.525Z] [INFO] [App] Config Cloud appliquée
+---
+[2026-05-10T11:44:40.526Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T11:44:40.526Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:42.589Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T11:44:52.947Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:44:55.006Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T11:44:58.938Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:45:01.007Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T11:45:05.067Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:45:07.142Z] [INFO] [Store] Sauvegarde auto de la config et des filtres vers le Cloud...
+---
+[2026-05-10T11:45:20.708Z] [INFO] [Store] Rapport ajouté: 1777973681187-iyadmc1d82k
+---
+[2026-05-10T11:45:20.709Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T11:45:23.709Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T11:45:28.380Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:45:28.698Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T11:45:28.813Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T11:45:33.890Z] [INFO] [Store] Rapport ajouté: 1778232791358-sxkyl6p1g0f
+---
+[2026-05-10T11:45:33.891Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T11:45:36.894Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T11:45:37.230Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:45:37.552Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T11:45:37.648Z] [INFO] [Storage] 7 rapports trouvés
+---
+[2026-05-10T11:45:47.448Z] [INFO] [Store] Rapport ajouté: bacfd5b3-ebc8-4215-a778-6ffba98452cb
+---
+[2026-05-10T11:45:47.448Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T11:45:50.451Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "analyse"
+}
+---
+[2026-05-10T11:45:50.826Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "evolution"
+}
+---
+[2026-05-10T11:48:14.819Z] [INFO] [Auth] Événement: SIGNED_IN
+DATA: {
+  "userId": "4401324f-66ff-4290-8e13-cc9ef254dcf6",
+  "email": "galizilemgalizi@gmail.com"
+}
+---
+[2026-05-10T11:48:14.819Z] [DEBUG] [Auth] Démarrage fetch profil (ID: 3)
+---
+[2026-05-10T11:48:14.819Z] [DEBUG] [Auth] Hydratation profil depuis le cache local
+---
+[2026-05-10T11:48:14.820Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "evolution"
+}
+---
+[2026-05-10T11:48:14.835Z] [INFO] [App] Profil chargé - Rôle: admin - Admin: OUI
+---
+[2026-05-10T11:48:14.835Z] [INFO] [App] Session active - Les rapports Cloud sont disponibles dans l'onglet Import
+---
+[2026-05-10T11:48:19.837Z] [WARN] [App] Chargement Cloud trop long, continuation avec local
+---
+[2026-05-10T11:49:05.240Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:49:05.554Z] [INFO] [Storage] Récupération de la liste des rapports...
+---
+[2026-05-10T11:49:12.892Z] [INFO] [App] Rafraîchissement global demandé...
+---
+[2026-05-10T11:49:12.892Z] [INFO] [Store] Rafraîchissement manuel des données lancé...
+---
+[2026-05-10T11:49:12.892Z] [INFO] [Store] Démarrage hydratation IndexedDB...
+---
+[2026-05-10T11:49:12.893Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:49:12.907Z] [INFO] [Store] 3 rapports chargés depuis IndexedDB
+---
+[2026-05-10T11:49:12.907Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
+---
+[2026-05-10T11:49:15.907Z] [DEBUG] [App] Render principal
+DATA: {
+  "authLoading": false,
+  "hasUser": true,
+  "isApproved": true,
+  "activeTab": "import"
+}
