@@ -160,7 +160,13 @@ export default function App() {
       // 2. Vérifier/Rafraîchir la session Supabase
       if (auth.user) {
         try {
-          const { data: { user }, error } = await supabase.auth.getUser();
+          const getUserPromise = supabase.auth.getUser();
+          const timeoutPromise = new Promise<{data: {user: any}, error: any}>((_, reject) => 
+            setTimeout(() => reject(new Error('TIMEOUT_REFRESH')), 4000)
+          );
+          
+          const { data: { user }, error } = await Promise.race([getUserPromise, timeoutPromise]);
+          
           if (error || !user) {
             logger.warn('App', 'Session expirée détectée lors du rafraîchissement');
             auth.signOut();
@@ -168,10 +174,13 @@ export default function App() {
             await auth.refreshProfile();
             logger.info('App', 'Session Cloud confirmée et profil rafraîchi');
           }
-        } catch (e) {
+        } catch (e: any) {
           logger.error('App', 'Erreur vérification session', e);
-          // Si erreur réseau grave, on ne déconnecte pas forcément, mais on prévient
-          store.showToast('Erreur de connexion cloud', 'error');
+          if (e.message === 'TIMEOUT_REFRESH') {
+            store.showToast('Le serveur Cloud ne répond pas. Vérifiez votre connexion.', 'error');
+          } else {
+            store.showToast('Erreur de connexion cloud', 'error');
+          }
         }
       }
     };
