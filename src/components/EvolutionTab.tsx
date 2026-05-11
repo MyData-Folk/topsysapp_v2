@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight,
   BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle, Trash2
@@ -11,6 +11,7 @@ import { AppConfig, HotelConfig } from '../types';
 import { AuthState } from '../hooks/useAuth';
 import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, deleteSnapshot } from '../lib/availabilitiesStorage';
 import { cn } from '../utils/cn';
+import { logger } from '../utils/logger';
 
 interface EvolutionTabProps {
   config: AppConfig;
@@ -64,12 +65,16 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   // Nouveaux états pour la sélection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [comparisonIds, setComparisonIds] = useState<[string, string] | null>(null);
+  const isFetchingRef = useRef(false);
 
   const canLoad = auth.user && hotel?.supabaseRegistered;
 
   // ── Chargement ──────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
-    if (!canLoad || !hotel) return;
+    if (!canLoad || !hotel || isFetchingRef.current) return;
+    logger.info('Evolution', 'Démarrage chargement snapshots', { hotelId: hotel.id, dateFrom, dateTo });
+    
+    isFetchingRef.current = true;
     setLoading(true);
     try {
       let result = await fetchSnapshotsForEvolution(hotel.id, dateFrom, dateTo);
@@ -92,6 +97,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
       setSnapshots(result);
       setLoaded(true);
+      logger.info('Evolution', `${result.length} snapshots chargés et traités`);
 
       // Par défaut, on sélectionne tout
       setSelectedIds(new Set(result.map(s => s.id)));
@@ -107,13 +113,23 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     } catch (e) {
       onShowToast(e instanceof Error ? e.message : 'Erreur chargement', 'error');
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
   }, [canLoad, hotel?.id, dateFrom, dateTo]);
 
-  // Recharger automatiquement si hôtel change
+  // Recharger automatiquement si hôtel change ou au montage
   useEffect(() => {
-    if (loaded) {
+    if (canLoad && hotel && !loaded && !loading) {
+      logger.debug('Evolution', 'Déclenchement chargement auto', { hotelId: hotel.id, loaded, loading });
+      load();
+    }
+  }, [canLoad, hotel?.id, loaded, loading, load]);
+
+  // Reset si hôtel change physiquement
+  useEffect(() => {
+    if (hotel?.id) {
+      logger.debug('Evolution', 'Changement hôtel détecté, reset état', hotel.id);
       setSnapshots([]);
       setLoaded(false);
     }

@@ -135,7 +135,7 @@ export function useAppStore() {
           saveConfig(fullConfig as any).catch(err => logger.error('Store', 'Erreur sauvegarde Cloud config', err));
         }
       });
-    }, 2000); // Debounce de 2s
+    }, 10000); // Augmenté à 10s pour stabiliser l'appli
 
     return () => clearTimeout(timeout);
   }, [config, filters]);
