@@ -125,6 +125,22 @@ export function useAuth(): AuthState {
       }
     })
 
+    // Sécurité: Forcer la vérification de la session quand l'onglet redevient actif (retour de veille)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && supabase) {
+        logger.debug('Auth', 'Onglet actif: vérification forcée de la session...');
+        supabase.auth.getSession().then(({ error }) => {
+          if (error) {
+            logger.warn('Auth', 'Session expirée lors du retour sur l\'onglet', error);
+            // Si la session est irrécupérable, on force la déconnexion locale
+            setUser(null);
+            setProfile(null);
+          }
+        });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
         logger.warn('Auth', 'Timeout d\'initialisation (3s) force la levée du chargement');
@@ -135,6 +151,7 @@ export function useAuth(): AuthState {
 
     return () => {
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearTimeout(timeout)
     }
   }, [loadProfile])
