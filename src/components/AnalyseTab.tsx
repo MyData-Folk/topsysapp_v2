@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw } from 'lucide-react';
+import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw, Cloud } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { OccupancyData, AppConfig, HotelConfig, FilterState } from '../types';
 import { useFilteredData } from '../hooks/useFilteredData';
@@ -17,7 +17,7 @@ import { AuthState } from '../hooks/useAuth';
 interface AnalyseTabProps {
   report: OccupancyData | null;
   config: AppConfig;
-  hotel: HotelConfig;
+  hotel: HotelConfig | null;
   filters: FilterState;
   pdfFile: File | null;
   auth: AuthState;
@@ -35,10 +35,10 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
   const [loadingSnaps, setLoadingSnaps] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const canPush = auth.user && hotel.supabaseRegistered && report !== null;
+  const canPush = auth.user && hotel?.supabaseRegistered && report !== null;
 
   const fetchSnapshots = useCallback(async () => {
-    if (!auth.user || !hotel.supabaseRegistered) return;
+    if (!auth.user || !hotel?.supabaseRegistered) return;
     setLoadingSnaps(true);
     try {
       const list = await listSnapshots(hotel.id);
@@ -48,14 +48,14 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
     } finally {
       setLoadingSnaps(false);
     }
-  }, [auth.user, hotel.id, hotel.supabaseRegistered]);
+  }, [auth.user, hotel?.id, hotel?.supabaseRegistered]);
 
   useEffect(() => {
     if (showHistory) fetchSnapshots();
   }, [showHistory, fetchSnapshots]);
 
   const handlePush = async () => {
-    if (!report) return;
+    if (!report || !hotel) return;
     setPushing(true);
     try {
       const snapshotId = await pushAvailabilities(report, hotel);
@@ -68,12 +68,24 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
     }
   };
 
-  const { visibleCols, kpis } = useFilteredData(report, filters, config, hotel);
+  const { visibleCols, kpis } = useFilteredData(report, filters, config, hotel || {} as any);
 
   const invalidDays = useMemo(() => {
     if (!report) return [];
     return report.dateLabels.filter((_, i) => report.validation[i] === false);
   }, [report]);
+
+  if (!hotel) {
+    return (
+      <div className="text-center py-24 opacity-60">
+        <div className="w-16 h-16 bg-gold/10 text-gold rounded-full flex items-center justify-center mx-auto mb-4">
+          <DatabaseZap size={32} />
+        </div>
+        <h3 className="text-lg font-bold text-text mb-2">Mode Global Actif</h3>
+        <p className="text-sm text-text-dim">Désactivez l'accès global dans le sélecteur d'hôtel en haut pour analyser un établissement spécifique.</p>
+      </div>
+    );
+  }
 
   if (!report) {
     return (

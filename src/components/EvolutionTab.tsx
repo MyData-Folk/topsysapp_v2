@@ -9,12 +9,12 @@ import {
 } from 'recharts';
 import { AppConfig, HotelConfig } from '../types';
 import { AuthState } from '../hooks/useAuth';
-import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, dateRangeOfSnaps, deleteSnapshot } from '../lib/availabilitiesStorage';
+import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, deleteSnapshot } from '../lib/availabilitiesStorage';
 import { cn } from '../utils/cn';
 
 interface EvolutionTabProps {
   config: AppConfig;
-  hotel: HotelConfig;
+  hotel: HotelConfig | null;
   auth: AuthState;
   onShowToast: (msg: string, type?: 'ok' | 'error') => void;
 }
@@ -61,11 +61,11 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const canLoad = auth.user && hotel.supabaseRegistered;
+  const canLoad = auth.user && hotel?.supabaseRegistered;
 
   // ── Chargement ──────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
-    if (!canLoad) return;
+    if (!canLoad || !hotel) return;
     setLoading(true);
     try {
       let result = await fetchSnapshotsForEvolution(hotel.id, dateFrom, dateTo);
@@ -73,7 +73,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       // Dédoublonnage par date d'édition et hôtel
       const seen = new Set();
       result = result.filter(s => {
-        const key = `${s.edition_date}-${s.establishment_name}`;
+        const key = `${s.edition_date}-${s.hotel_id}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -94,7 +94,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     } finally {
       setLoading(false);
     }
-  }, [canLoad, hotel.id, dateFrom, dateTo]);
+  }, [canLoad, hotel?.id, dateFrom, dateTo]);
 
   // Recharger automatiquement si hôtel change
   useEffect(() => {
@@ -102,7 +102,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       setSnapshots([]);
       setLoaded(false);
     }
-  }, [hotel.id]);
+  }, [hotel?.id]);
 
   // ── Données pour les graphiques ──────────────────────────────────────────────
 
@@ -148,8 +148,8 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     const first = list[0];
     const last = list[list.length - 1];
     if (first.id === last.id) return [];
-    const firstDates = new Set(first.days.map(d => d.date));
-    const lastDates = new Set(last.days.map(d => d.date));
+    const firstDates = new Set<string>(first.days.map(d => d.date));
+    const lastDates = new Set<string>(last.days.map(d => d.date));
     const commonDates = Array.from(firstDates).filter(d => lastDates.has(d)).sort();
 
     if (commonDates.length === 0) return [];
@@ -183,7 +183,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
   // 4. Évolution par type de chambre (tableau)
   const typeEvolution = useMemo(() => {
-    if (snapshots.length === 0) return [];
+    if (snapshots.length === 0 || !hotel) return [];
     return hotel.types.map(type => {
       const bySnap = snapshots.map(s => {
         const days = s.days as DayAvailability[];
@@ -252,7 +252,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     try {
       await deleteSnapshot(id);
       onShowToast?.('Rapport supprimé avec succès', 'ok');
-      handleRefresh();
+      load();
     } catch (err: any) {
       onShowToast?.(err.message, 'error');
     }
@@ -261,6 +261,20 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   const dateRange = dateRangeOfSnaps(snapshots);
 
   // ── Rendu ───────────────────────────────────────────────────────────────────
+  if (!hotel) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 pb-12">
+        <div className="text-center py-24 opacity-60">
+          <div className="w-16 h-16 bg-gold/10 text-gold rounded-full flex items-center justify-center mx-auto mb-4">
+            <BarChart3 size={32} />
+          </div>
+          <h3 className="text-lg font-bold text-text mb-2">Mode Global Actif</h3>
+          <p className="text-sm text-text-dim">Désactivez l'accès à tous les hôtels dans le sélecteur en haut pour accéder à l'évolution d'un établissement spécifique.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
 

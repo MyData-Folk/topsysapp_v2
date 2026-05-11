@@ -62,24 +62,32 @@ export function Header({
                 <ChevronDown size={14} />
               </div>
             </div>
-            <label className="flex items-center gap-2 px-1 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={!selectedHotelId}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    onHotelChange(null);
-                  } else {
-                    const firstId = hotels.length > 0 ? hotels[0].id : null;
-                    onHotelChange(firstId);
-                  }
-                }}
-                className="w-3 h-3 rounded border-border text-gold focus:ring-gold bg-surf2 transition-all cursor-pointer"
-              />
-              <span className="text-[10px] font-bold text-text-dark group-hover:text-text transition-colors uppercase tracking-tight">Afficher tous les hôtels</span>
-            </label>
+            
+            <button
+              onClick={() => {
+                if (!selectedHotelId) {
+                  // Désactiver le mode global : sélectionner le premier hôtel dispo
+                  const firstId = hotels.length > 0 ? hotels[0].id : null;
+                  onHotelChange(firstId);
+                } else {
+                  // Activer le mode global
+                  onHotelChange(null);
+                }
+              }}
+              className={cn(
+                "w-full py-2 px-3 mt-1 text-[10px] font-bold uppercase tracking-wide rounded-xl border transition-all text-center",
+                !selectedHotelId
+                  ? "bg-gold text-bg border-gold/50 shadow-sm hover:bg-gold-light"
+                  : "bg-surf2 text-text-dim border-border hover:border-gold/30 hover:text-gold"
+              )}
+            >
+              {!selectedHotelId 
+                ? "Désactiver l'accès à tous les hôtels" 
+                : "Activer l'accès à tous les hôtels"}
+            </button>
+
             {activeHotel && (
-              <p className="text-[9px] text-text-dark uppercase tracking-widest truncate max-w-[250px] mt-1 opacity-60">
+              <p className="text-[9px] text-text-dark uppercase tracking-widest truncate max-w-[250px] mt-1 opacity-60 text-center">
                 {activeHotel.address}
               </p>
             )}
