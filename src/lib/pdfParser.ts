@@ -276,7 +276,7 @@ function extractData(pages: string[][], hotel: HotelConfig, config: AppConfig): 
       const dd = String(dayNum).padStart(2, '0');
       dateLabels.push({
         full: `${DAYS_FR[dowIndex]} ${dd} ${MONTHS_FR[curMonth]}`,
-        short: `${dd}/${curMonth + 1}`,
+        short: `${dd}/${String(curMonth + 1).padStart(2, '0')}`,
         day: `${DAYS_FR[dowIndex]} ${dd}`,
         isWk, date: d,
       });
