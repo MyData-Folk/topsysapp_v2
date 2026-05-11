@@ -210,7 +210,7 @@ export function useAuth(): AuthState {
 
   const signOut = async () => {
     if (!supabase) return
-    logger.info('Auth', 'Déconnexion radicale lancée...');
+    logger.info('Auth', 'Déconnexion lancée...');
     
     // 1. Réinitialisation immédiate de l'état local pour débloquer l'UI
     setUser(null)
@@ -218,29 +218,18 @@ export function useAuth(): AuthState {
     
     try {
       // 2. Déconnexion Supabase avec timeout strict de 2s
-      const signOutPromise = supabase.auth.signOut();
+      const signOutPromise = supabase.auth.signOut({ scope: 'local' });
       const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_SIGNOUT')), 2000));
       await Promise.race([signOutPromise, timeoutPromise]).catch(() => {
         logger.warn('Auth', 'Supabase signOut a échoué ou expiré, on force le nettoyage.');
       });
       
-      // 3. Nettoyage FORCÉ de TOUT le localStorage lié à l'app et à Supabase
-      localStorage.removeItem('supabase.auth.token');
+      // 3. Suppression ciblée uniquement de notre clé de session (pas de purge nucléaire)
+      localStorage.removeItem('topsys-explorer-auth-v2');
       localStorage.removeItem(PROFILE_CACHE_KEY);
-      
-      // Purge nucléaire des clés Supabase (elles commencent toutes par sb-)
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(k => localStorage.removeItem(k));
-      
       sessionStorage.clear();
       
-      logger.info('Auth', 'Nettoyage nucléaire terminé, rechargement...');
+      logger.info('Auth', 'Déconnexion réussie, rechargement...');
       // 4. Rechargement de la page pour repartir sur un état vierge
       window.location.reload();
     } catch (err) {
