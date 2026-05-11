@@ -92,7 +92,13 @@ export function useAuth(): AuthState {
       : await fetchProfileById(userId)
     
     if (myId === fetchIdRef.current) {
-      setProfile(p)
+      if (p) {
+        setProfile(p);
+      } else {
+        // En cas d'échec de fetch, on ne remet pas à null si on a déjà un profil (cache)
+        // sauf si c'est explicitement une déconnexion (gérée ailleurs)
+        logger.warn('Auth', `Fetch profil ${myId} n'a rien renvoyé, conservation de l'état actuel`);
+      }
     } else {
       logger.debug('Auth', `Fetch profil ${myId} ignoré (périmé)`);
     }
@@ -144,11 +150,11 @@ export function useAuth(): AuthState {
 
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
-        logger.warn('Auth', 'Timeout d\'initialisation (3s) force la levée du chargement');
+        logger.warn('Auth', 'Timeout d\'initialisation (10s) force la levée du chargement');
         initializedRef.current = true
         setLoading(false)
       }
-    }, 3000)
+    }, 10000)
 
     return () => {
       subscription.unsubscribe()
