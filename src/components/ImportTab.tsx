@@ -19,24 +19,29 @@ function normalizeName(s: string): string {
     .trim();
 }
 
-function hotelMatchesReport(hotelName: string, reportName: string | undefined): boolean {
-  if (!reportName) return false;
-  const h = normalizeName(hotelName);
-  const r = normalizeName(reportName);
+function hotelMatchesReport(hotel: HotelConfig, reportName: string | undefined, filename?: string): boolean {
+  const h = normalizeName(hotel.name);
+  const alias = normalizeName(hotel.cloudAlias || '');
+  const r = normalizeName(reportName || '');
+  const f = normalizeName(filename || '');
   
-  // 1. Correspondance exacte ou inclusion totale
-  if (h === r || h.includes(r) || r.includes(h)) return true;
+  if (!h && !alias) return true; // Si rien n'est configuré, on ne bloque pas
+  
+  // 1. Correspondance exacte ou inclusion totale (Nom ou Alias ou Fichier)
+  if (r && (h === r || h.includes(r) || r.includes(h))) return true;
+  if (alias && r && (alias === r || alias.includes(r) || r.includes(alias))) return true;
+  if (f && (f.includes(h) || h.includes(f))) return true;
+  if (alias && f && f.includes(alias)) return true;
   
   // 2. Intersection de mots significatifs
   const hWords = h.split(' ').filter(w => w.length >= 3);
-  const rWords = r.split(' ').filter(w => w.length >= 3);
+  const aWords = alias.split(' ').filter(w => w.length >= 3);
+  const words = [...new Set([...hWords, ...aWords])];
   
-  // Si on n'a pas de mots longs, on prend tous les mots
-  const hFinal = hWords.length > 0 ? hWords : h.split(' ').filter(w => w.length > 0);
-  const rFinal = rWords.length > 0 ? rWords : r.split(' ').filter(w => w.length > 0);
-  
-  // Si l'un des mots de l'hôtel est dans le nom du rapport, ou vice-versa
-  return hFinal.some(w => r.includes(w)) || rFinal.some(w => h.includes(w));
+  if (words.length === 0) return true; 
+
+  // Si l'un des mots de l'hôtel/alias est dans le nom du rapport ou le fichier
+  return words.some(w => r.includes(w) || f.includes(w));
 }
 
 interface ImportTabProps {
@@ -365,7 +370,14 @@ export function ImportTab({
               }
               
               if (!targetHotel) return true;
-              return hotelMatchesReport(targetHotel.name, r.establishment_name);
+              const match = hotelMatchesReport(targetHotel, r.establishment_name, r.filename);
+              
+              if (!match && !showAllCloud) {
+                // Log uniquement si on cherche vraiment à filtrer
+                logger.debug('ImportTab', `Filtre échoué: "${targetHotel.name}" (alias: "${targetHotel.cloudAlias}") vs "${r.establishment_name}" / "${r.filename}"`);
+              }
+              
+              return match;
             });
 
             if (filtered.length === 0) {

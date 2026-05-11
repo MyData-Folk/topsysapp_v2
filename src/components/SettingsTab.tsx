@@ -272,6 +272,7 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
                 <Field label="Nom" value={activeHotel.name} onChange={v => onUpdateHotel({ name: v })} />
                 <Field label="Adresse" value={activeHotel.address} onChange={v => onUpdateHotel({ address: v })} />
                 <Field label="Référence" value={activeHotel.reference} onChange={v => onUpdateHotel({ reference: v })} />
+                <Field label="Alias Cloud (Nom PDF)" value={activeHotel.cloudAlias || ''} onChange={v => onUpdateHotel({ cloudAlias: v })} />
                 <Field label="Nom export XLSX" value={config.xlsxName} onChange={v => save({ xlsxName: v })} />
               </div>
             </div>
