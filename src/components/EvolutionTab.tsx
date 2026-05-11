@@ -258,12 +258,19 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
       let diff = 0;
       if (comparisonIds) {
-        const firstIdx = selectedSnaps.findIndex(s => s.id === comparisonIds[0]);
-        const lastIdx = selectedSnaps.findIndex(s => s.id === comparisonIds[1]);
-        if (firstIdx !== -1 && lastIdx !== -1) {
-          const r1 = bySnap[firstIdx].rate;
-          const r2 = bySnap[lastIdx].rate;
-          if (r1 !== null && r2 !== null) diff = r2 - r1;
+        let s1 = enrichedSnaps.find(s => s.id === comparisonIds[0]);
+        let s2 = enrichedSnaps.find(s => s.id === comparisonIds[1]);
+        if (s1 && s2) {
+          const d1 = s1.edition_date || s1.import_date || '';
+          const d2 = s2.edition_date || s2.import_date || '';
+          const firstIdx = selectedSnaps.findIndex(s => s.id === (d1 <= d2 ? s1!.id : s2!.id));
+          const lastIdx = selectedSnaps.findIndex(s => s.id === (d1 <= d2 ? s2!.id : s1!.id));
+
+          if (firstIdx !== -1 && lastIdx !== -1) {
+            const r1 = bySnap[firstIdx].rate;
+            const r2 = bySnap[lastIdx].rate;
+            if (r1 !== null && r2 !== null) diff = r2 - r1;
+          }
         }
       } else {
         const firstValid = validForTrend[0].rate!;
@@ -283,42 +290,63 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       bySnap: { snapshotLabel: string; rate: number | null; incomplete: boolean }[];
       diff: number;
     }[];
-  }, [selectedSnaps, hotel.types, comparisonIds]);
+  }, [selectedSnaps, hotel.types, comparisonIds, enrichedSnaps]);
 
   // 5. KPIs
   const kpis = useMemo(() => {
     if (!comparisonIds) return null;
-    const first = enrichedSnaps.find(s => s.id === comparisonIds[0]);
-    const last = enrichedSnaps.find(s => s.id === comparisonIds[1]);
-    if (!first || !last) return null;
+    let s1 = enrichedSnaps.find(s => s.id === comparisonIds[0]);
+    let s2 = enrichedSnaps.find(s => s.id === comparisonIds[1]);
+    if (!s1 || !s2) return null;
+
+    // Toujours comparer le plus récent au plus ancien, peu importe l'ordre de clic
+    const d1 = s1.edition_date || s1.import_date || '';
+    const d2 = s2.edition_date || s2.import_date || '';
+    const first = d1 <= d2 ? s1 : s2;
+    const last = d1 <= d2 ? s2 : s1;
+
+    // Intersection des dates pour une comparaison loyale
+    const firstDaysMap = new Map(first.days.map(d => [d.date, d]));
+    const lastDaysMap = new Map(last.days.map(d => [d.date, d]));
+    const commonDates = Array.from(firstDaysMap.keys()).filter(d => lastDaysMap.has(d));
+    
+    if (commonDates.length === 0) return null;
+
+    const commonDaysFirst = commonDates.map(d => firstDaysMap.get(d)!);
+    const commonDaysLast = commonDates.map(d => lastDaysMap.get(d)!);
+
+    // Calcul des moyennes sur la plage commune
+    const fAvgRate = commonDaysFirst.reduce((sum, d) => sum + d.taux, 0) / commonDates.length;
+    const lAvgRate = commonDaysLast.reduce((sum, d) => sum + d.taux, 0) / commonDates.length;
+    const fTotalOcc = commonDaysFirst.reduce((sum, d) => sum + d.occupied_total, 0);
+    const lTotalOcc = commonDaysLast.reduce((sum, d) => sum + d.occupied_total, 0);
 
     const occDiffByType = hotel.types.map(type => {
-      const d1 = first.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
-      const d2 = last.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const v1 = commonDaysFirst.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const v2 = commonDaysLast.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
       return {
         label: type.label,
         code: type.code,
-        diff: d2 - d1,
-        v1: d1,
-        v2: d2
+        diff: v2 - v1,
+        v1,
+        v2
       };
     }).filter(d => d.v1 > 0 || d.v2 > 0);
 
     return {
-      rateDiff: last.avgRate - first.avgRate,
-      occDiff: last.totalOcc - first.totalOcc,
-      libresDiff: last.totalLibres - first.totalLibres,
-      firstRate: first.avgRate,
-      lastRate: last.avgRate,
-      firstOcc: first.totalOcc,
-      lastOcc: last.totalOcc,
+      rateDiff: lAvgRate - fAvgRate,
+      occDiff: lTotalOcc - fTotalOcc,
+      firstRate: fAvgRate,
+      lastRate: lAvgRate,
+      firstOcc: fTotalOcc,
+      lastOcc: lTotalOcc,
       firstLabel: first.label,
       lastLabel: last.label,
       occDiffByType,
       snapshotsCount: selectedSnaps.length,
-      daysCount: first.days.length,
+      daysCount: commonDates.length,
     };
-  }, [snapshots, comparisonIds, hotel.types, selectedSnaps.length]);
+  }, [enrichedSnaps, comparisonIds, hotel.types, selectedSnaps.length]);
 
   const handlePrint = () => {
     window.print();
