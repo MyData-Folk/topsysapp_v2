@@ -13,11 +13,15 @@ import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, deleteSn
 import { cn } from '../utils/cn';
 import { logger } from '../utils/logger';
 
+import { EvolutionState } from '../types';
+
 interface EvolutionTabProps {
   config: AppConfig;
   hotel: HotelConfig | null;
   auth: AuthState;
   onShowToast: (msg: string, type?: 'ok' | 'error') => void;
+  state: EvolutionState;
+  onStateChange: (updates: EvolutionState | ((prev: EvolutionState) => EvolutionState)) => void;
 }
 
 const COLORS = ['#d4b162', '#60a5fa', '#34d399', '#f59e0b', '#ef4444', '#a78bfa', '#f472b6'];
@@ -51,22 +55,22 @@ function dateRangeOfSnaps(snaps: SnapshotWithDays[]): { min: string; max: string
   return { min: all.reduce((a, b) => (a < b ? a : b)), max: all.reduce((a, b) => (a > b ? a : b)) };
 }
 
-export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabProps) {
-  // ── État ────────────────────────────────────────────────────────────────────
-  const today = new Date().toISOString().split('T')[0];
-  const thirtyDaysLater = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateChange }: EvolutionTabProps) {
+  const { dateFrom, dateTo, selectedIds, comparisonIds, viewMode, snapshots } = state;
 
-  const [dateFrom, setDateFrom] = useState(today);
-  const [dateTo, setDateTo] = useState(thirtyDaysLater);
-  const [snapshots, setSnapshots] = useState<SnapshotWithDays[]>([]);
+  const setDateFrom = (val: string) => onStateChange(prev => ({ ...prev, dateFrom: val }));
+  const setDateTo = (val: string) => onStateChange(prev => ({ ...prev, dateTo: val }));
+  const setSelectedIds = (val: Set<string>) => onStateChange(prev => ({ ...prev, selectedIds: val }));
+  const setComparisonIds = (val: [string, string] | null) => onStateChange(prev => ({ ...prev, comparisonIds: val }));
+  const setViewMode = (val: 'rate' | 'volume') => onStateChange(prev => ({ ...prev, viewMode: val }));
+  const setSnapshots = (val: SnapshotWithDays[]) => onStateChange(prev => ({ ...prev, snapshots: val }));
+
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(snapshots.length > 0);
 
-  // Nouveaux états pour la sélection
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [comparisonIds, setComparisonIds] = useState<[string, string] | null>(null);
+  // Refs pour éviter les boucles de chargement
   const isFetchingRef = useRef(false);
-  const lastHotelIdRef = useRef<string | null>(null);
+  const lastHotelIdRef = useRef<string | null>(snapshots.length > 0 ? hotel?.id || null : null);
 
   const canLoad = auth.user && hotel?.supabaseRegistered;
 
@@ -249,7 +253,8 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
         return {
           snapshotLabel: s.label,
           rate: rate != null ? Math.round(rate * 10) / 10 : null,
-          incomplete: !hasRooms || totalOcc === 0, 
+          occupied: totalOcc,
+          incomplete: !hasRooms || (totalOcc === 0 && totalCap > 0), 
         };
       });
 
@@ -270,29 +275,36 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
           const common = Array.from(olderMap.keys()).filter(d => newerMap.has(d));
           if (common.length > 0) {
             const cap = type.capacity * common.length;
-            const r1 = cap > 0
-              ? (common.reduce((s, d) => s + (olderMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0) / cap) * 100
-              : 0;
-            const r2 = cap > 0
-              ? (common.reduce((s, d) => s + (newerMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0) / cap) * 100
-              : 0;
-            diff = r2 - r1;
+            const v1 = common.reduce((s, d) => s + (olderMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0);
+            const v2 = common.reduce((s, d) => s + (newerMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0);
+            
+            if (viewMode === 'volume') {
+              diff = v2 - v1;
+            } else {
+              const r1 = cap > 0 ? (v1 / cap) * 100 : 0;
+              const r2 = cap > 0 ? (v2 / cap) * 100 : 0;
+              diff = r2 - r1;
+            }
           }
         }
       } else {
-        const firstValid = validForTrend[0].rate!;
-        const lastValid  = validForTrend[validForTrend.length - 1].rate!;
-        diff = lastValid - firstValid;
+        const older = validForTrend[0];
+        const newer = validForTrend[validForTrend.length - 1];
+        if (viewMode === 'volume') {
+          diff = (newer.occupied || 0) - (older.occupied || 0);
+        } else {
+          diff = (newer.rate || 0) - (older.rate || 0);
+        }
       }
 
       return { type: type.label, code: type.code, bySnap, diff };
     }).filter(Boolean) as {
       type: string;
       code: string;
-      bySnap: { snapshotLabel: string; rate: number | null; incomplete: boolean }[];
+      bySnap: { snapshotLabel: string; rate: number | null; occupied: number; incomplete: boolean }[];
       diff: number;
     }[];
-  }, [selectedSnaps, hotel.types, comparisonIds, enrichedSnaps]);
+  }, [selectedSnaps, hotel.types, comparisonIds, enrichedSnaps, viewMode]);
 
   // 5. KPIs — calculés sur les DATES COMMUNES aux deux snapshots (évite le biais de plage)
   const kpis = useMemo(() => {
@@ -756,54 +768,45 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
             </div>
           </div>
 
-          {/* Delta jour par jour entre premier et dernier snapshot */}
-          {deltaChart.length > 0 && (
-            <div className="bg-surf1 border border-border p-5 rounded-2xl overflow-x-auto custom-scrollbar">
-              <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest mb-1 flex items-center gap-2">
-                <BarChart3 size={12} className="text-amber" /> Variation journalière (dernier vs premier snapshot)
-              </h3>
-              <p className="text-[10px] text-text-dark mb-5">
-                Positif = des chambres supplémentaires ont été réservées · Négatif = des annulations
-              </p>
-              <div className="h-[240px] min-w-[500px] relative">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                  <BarChart data={deltaChart} barCategoryGap="20%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
-                    <ReferenceLine y={0} stroke="var(--theme-border)" strokeWidth={1.5} />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false}
-                      tick={{ fill: 'var(--theme-text-dark)', fontSize: 9 }}
-                      interval={Math.floor(deltaChart.length / 8)} />
-                    <YAxis axisLine={false} tickLine={false}
-                      tick={{ fill: 'var(--theme-text-dark)', fontSize: 10 }}
-                      tickFormatter={v => `${v > 0 ? '+' : ''}${v}%`} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'var(--theme-surf1)', border: '1px solid var(--theme-border)', borderRadius: '12px' }}
-                      formatter={(v: number) => [`${v > 0 ? '+' : ''}${v.toFixed(1)}%`, 'Variation Taux']}
-                      labelStyle={{ color: 'var(--theme-text-dim)', fontSize: '10px' }}
-                    />
-                    <Bar dataKey="delta" radius={[4, 4, 0, 0]} name="Δ Taux"
-                      fill="var(--theme-gold)"
-                      // Vert si positif, rouge si négatif via Cell
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
+          {/* Suppression du graphique de variation journalière car non pertinent pour le client */}
 
           {/* Évolution par type de chambre */}
           {typeEvolution.length > 0 && (
             <div className="bg-surf1 border border-border p-5 rounded-2xl overflow-x-auto custom-scrollbar">
-              <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="flex items-center justify-between mb-5">
                 <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest">
                   Évolution par type de chambre
                 </h3>
-                {enrichedSnaps.some(s => !s.hasRooms) && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-amber shrink-0">
-                    <AlertTriangle size={11} />
-                    Les colonnes marquées <strong>⚠</strong> n'ont pas de données par type — snapshot incomplet.
+                
+                <div className="flex items-center gap-4">
+                  {enrichedSnaps.some(s => !s.hasRooms) && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-amber shrink-0">
+                      <AlertTriangle size={11} />
+                      <span className="hidden sm:inline">Snapshots incomplets <strong>⚠</strong></span>
+                    </div>
+                  )}
+
+                  <div className="flex bg-surf2 p-0.5 rounded-lg border border-border">
+                    <button
+                      onClick={() => setViewMode('rate')}
+                      className={cn(
+                        "px-2 py-1 text-[9px] font-bold rounded-md transition-all",
+                        viewMode === 'rate' ? "bg-gold text-bg shadow-sm" : "text-text-dark hover:text-text"
+                      )}
+                    >
+                      Taux (%)
+                    </button>
+                    <button
+                      onClick={() => setViewMode('volume')}
+                      className={cn(
+                        "px-2 py-1 text-[9px] font-bold rounded-md transition-all",
+                        viewMode === 'volume' ? "bg-gold text-bg shadow-sm" : "text-text-dark hover:text-text"
+                      )}
+                    >
+                      Volume (N)
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
               <table className="w-full text-xs min-w-[500px]">
                 <thead>
@@ -844,17 +847,19 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                       <td className="p-3 font-bold text-text">{te.type}</td>
                       {te.bySnap.map((b, i) => (
                         <td key={i} className={cn("p-3 text-center font-mono", b.incomplete ? "text-text-dark/30" : "text-text-dim")}>
-                          {b.rate != null ? `${b.rate.toFixed(1)}%` : '—'}
+                          {b.rate != null 
+                            ? (viewMode === 'rate' ? `${b.rate.toFixed(1)}%` : b.occupied) 
+                            : '—'}
                         </td>
                       ))}
                       <td className="p-3 text-center">
-                        <span className={cn(
-                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold",
-                          te.diff > 2 ? "bg-green/10 text-green" : te.diff < -2 ? "bg-red/10 text-red" : "bg-surf3 text-text-dark"
+                        <div className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px]",
+                          te.diff > 0 ? "bg-green/10 text-green" : te.diff < 0 ? "bg-red/10 text-red" : "bg-surf2 text-text-dark"
                         )}>
-                          {te.diff > 0 ? <ArrowUpRight size={10} /> : te.diff < 0 ? <ArrowDownRight size={10} /> : <Minus size={10} />}
-                          {te.diff > 0 ? '+' : ''}{te.diff.toFixed(1)}%
-                        </span>
+                          {te.diff > 0 ? <ArrowUpRight size={10} /> : te.diff < 0 ? <ArrowDownRight size={10} /> : null}
+                          {te.diff > 0 ? '+' : ''}{viewMode === 'rate' ? `${te.diff.toFixed(1)}%` : te.diff}
+                        </div>
                       </td>
                     </tr>
                   ))}

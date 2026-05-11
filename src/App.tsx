@@ -290,6 +290,8 @@ export default function App() {
                     hotel={store.activeHotel}
                     auth={auth}
                     onShowToast={store.showToast}
+                    state={store.evolutionState}
+                    onStateChange={store.setEvolutionState}
                   />
                 </motion.div>
               )}

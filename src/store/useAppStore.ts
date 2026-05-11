@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { get, set } from 'idb-keyval';
-import { AppConfig, OccupancyData, HotelConfig, TabId, FilterState } from '../types';
+import { AppConfig, OccupancyData, HotelConfig, TabId, FilterState, EvolutionState } from '../types';
 import { DEFAULT_CONFIG, DEFAULT_HOTEL, DEFAULT_IGNORE_PREFIXES } from '../utils/constants';
 import { loadCloudConfig, saveConfig } from '../lib/supabaseStorage';
 import { supabase } from '../lib/supabaseClient';
@@ -69,6 +69,15 @@ export function useAppStore() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'ok' | 'error' } | null>(null);
+
+  const [evolutionState, setEvolutionState] = useState<EvolutionState>({
+    dateFrom: new Date().toISOString().split('T')[0],
+    dateTo: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+    selectedIds: new Set(),
+    comparisonIds: null,
+    viewMode: 'rate',
+    snapshots: []
+  });
 
   const activeHotel = useMemo(() => {
     return config.hotels.find(h => h.id === selectedHotelId) || null;
@@ -273,6 +282,8 @@ export function useAppStore() {
       if (id) updateConfig({ selectedHotelId: id });
     },
     filteredReports,
-    refreshData
+    refreshData,
+    evolutionState,
+    setEvolutionState
   };
 }

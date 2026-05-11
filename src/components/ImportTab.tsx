@@ -285,25 +285,27 @@ export function ImportTab({
               <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest flex items-center gap-2">
                 <Cloud size={12} className="text-gold" /> Rapports cloud
               </h3>
-              <label className="flex items-center gap-2 cursor-pointer group">
+              <div 
+                onClick={() => setShowAllCloud(!showAllCloud)}
+                className="flex items-center gap-2 cursor-pointer group select-none"
+              >
                 <div className="relative">
-                  <input 
-                    type="checkbox" 
-                    checked={showAllCloud} 
-                    onChange={e => setShowAllCloud(e.target.checked)}
-                    className="sr-only"
-                  />
                   <div className={cn(
-                    "w-7 h-4 bg-surf2 rounded-full border border-border transition-colors",
-                    showAllCloud ? "bg-gold/20 border-gold/40" : ""
+                    "w-8 h-4 bg-surf2 rounded-full border border-border transition-colors",
+                    showAllCloud ? "bg-gold/40 border-gold/60" : "group-hover:border-text-dark/30"
                   )} />
                   <div className={cn(
-                    "absolute left-0.5 top-0.5 w-3 h-3 rounded-full transition-all",
-                    showAllCloud ? "translate-x-3 bg-gold" : "bg-text-dark"
+                    "absolute top-0.5 left-0.5 w-3 h-3 rounded-full transition-all shadow-sm",
+                    showAllCloud ? "translate-x-4 bg-gold" : "bg-text-dark"
                   )} />
                 </div>
-                <span className="text-[10px] font-bold text-text-dark group-hover:text-text-dim transition-colors">{activeHotel ? 'Tous les hôtels' : 'Afficher tout'}</span>
-              </label>
+                <span className={cn(
+                  "text-[10px] font-bold transition-colors",
+                  showAllCloud ? "text-gold" : "text-text-dark group-hover:text-text-dim"
+                )}>
+                  {activeHotel ? 'Tous les hôtels' : 'Tous les rapports'}
+                </span>
+              </div>
             </div>
             <button
               onClick={fetchCloudReports}
@@ -327,15 +329,32 @@ export function ImportTab({
             </div>
           ) : cloudReports.length === 0 ? (
             <p className="text-xs text-text-dim text-center py-6">Aucun rapport dans le cloud.</p>
-          ) : (
+          ) : (() => {
+            // Filtrage appliqué
+            const filtered = cloudReports.filter(r => {
+              if (showAllCloud || !activeHotel) return true;
+              return hotelMatchesReport(activeHotel.name, r.establishment_name);
+            });
+
+            if (filtered.length === 0) {
+              return (
+                <div className="py-6 text-center space-y-3">
+                  <p className="text-xs text-text-dim">
+                    Aucun rapport cloud pour <strong className="text-text">{activeHotel?.name}</strong>.
+                  </p>
+                  <button
+                    onClick={() => setShowAllCloud(true)}
+                    className="text-[10px] font-bold text-gold hover:text-gold-light underline underline-offset-2 transition-colors"
+                  >
+                    Afficher tous les hôtels
+                  </button>
+                </div>
+              );
+            }
+
+            return (
             <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-              {cloudReports
-                .filter(r => {
-                  // Sans hôtel actif OU toggle "tout afficher" : on montre tout
-                  if (showAllCloud || !activeHotel) return true;
-                  // Filtrage par hôtel sélectionné avec normalisation (gère les accents, casse)
-                  return hotelMatchesReport(activeHotel.name, r.establishment_name);
-                })
+              {filtered
                 .sort((a, b) => {
                   // 1. Non-importés en premier, importés en bas
                   const aImported = reports.some(lr => lr.periodStr === a.period_str && lr.establishmentName === a.establishment_name);
@@ -406,10 +425,11 @@ export function ImportTab({
                     </div>
                   )}
                 </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
