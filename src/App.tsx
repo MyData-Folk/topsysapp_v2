@@ -60,7 +60,7 @@ export default function App() {
       
       // Chargement de la config Cloud avec timeout de 5s
       const cloudPromise = loadCloudConfig();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_CLOUD')), 5000));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_CLOUD')), 15000));
 
       Promise.race([cloudPromise, timeoutPromise]).then(cloudConfig => {
         if (cloudConfig) {
@@ -203,8 +203,8 @@ export default function App() {
             </div>
           )}
 
-          {/* Main app — shown when approved, skipped, or visitor (pending) */}
-          {!auth.loading && (auth.isApproved || skipAuth || auth.isVisitor || (auth.user && auth.profile === null)) && (
+          {/* Main app — shown when approved, skipped, visitor, or simply authenticated (gate handles inner views) */}
+          {!auth.loading && (auth.isApproved || skipAuth || auth.isVisitor || !!auth.user) && (
             <motion.div 
               key="app"
               initial={{ opacity: 0 }}
