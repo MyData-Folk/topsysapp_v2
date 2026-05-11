@@ -111,6 +111,26 @@ export function useAuth(): AuthState {
       return 
     }
 
+    const lastCheckRef = { current: 0 }
+
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user && !initializedRef.current) {
+          logger.debug('Auth', 'Session initiale détectée via getSession');
+          setUser(session.user)
+          await loadProfile(session.user.id, false)
+        }
+      } catch (e) {
+        logger.warn('Auth', 'Échec check session initial', e)
+      } finally {
+        if (!initializedRef.current) {
+          initializedRef.current = true
+          setLoading(false)
+        }
+      }
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const u = session?.user ?? null
       logger.info('Auth', `Événement: ${event}`, { userId: u?.id, email: u?.email });
@@ -132,16 +152,22 @@ export function useAuth(): AuthState {
       }
     })
 
-    // Sécurité: Forcer la vérification de la session quand l'onglet redevient actif (retour de veille)
+    // On lance un check immédiat pour ne pas attendre l'event (plus rapide au reload)
+    initSession();
+
+    // Sécurité: Forcer la vérification de la session quand l'onglet redevient actif (max 1x toutes les 5 min)
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && supabase) {
-        logger.debug('Auth', 'Onglet actif: vérification forcée de la session...');
-        supabase.auth.getSession().then(({ error }) => {
-          if (error) {
-            logger.warn('Auth', 'Session expirée lors du retour sur l\'onglet', error);
-            // Si la session est irrécupérable, on force la déconnexion locale
-            setUser(null);
-            setProfile(null);
+      const now = Date.now();
+      if (document.visibilityState === 'visible' && supabase && (now - lastCheckRef.current > 300000)) {
+        lastCheckRef.current = now;
+        logger.debug('Auth', 'Onglet actif: vérification périodique de la session...');
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+          if (error || !session) {
+            if (user) {
+              logger.warn('Auth', 'Session perdue ou expirée au retour sur l\'onglet');
+              setUser(null);
+              setProfile(null);
+            }
           }
         });
       }
