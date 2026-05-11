@@ -321,6 +321,17 @@ export function ImportTab({
                   const isImported = reports.some(lr => lr.periodStr === r.period_str && lr.establishmentName === r.establishment_name);
                   return hotelMatches && !isImported;
                 })
+                .sort((a, b) => {
+                  // 1. Priorité à l'hôtel sélectionné
+                  if (activeHotel) {
+                    const matchA = a.establishment_name?.toLowerCase().includes(activeHotel.name.toLowerCase()) || activeHotel.name.toLowerCase().includes(a.establishment_name?.toLowerCase() || '');
+                    const matchB = b.establishment_name?.toLowerCase().includes(activeHotel.name.toLowerCase()) || activeHotel.name.toLowerCase().includes(b.establishment_name?.toLowerCase() || '');
+                    if (matchA && !matchB) return -1;
+                    if (!matchA && matchB) return 1;
+                  }
+                  // 2. Tri par date d'upload (plus récent en premier)
+                  return new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime();
+                })
                 .map(r => (
                 <div key={r.id} className="rounded-xl overflow-hidden">
                   <div
