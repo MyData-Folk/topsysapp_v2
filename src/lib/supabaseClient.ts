@@ -23,13 +23,12 @@ export const supabase: SupabaseClient | null = (url && key)
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
-        // Clé de stockage explicite pour éviter les collisions entre versions/onglets
+        detectSessionInUrl: false, // false pour éviter les boucles de redirection en SPA
+        // Clé de stockage explicite et stable — évite les collisions entre onglets/versions
         storageKey: 'topsys-explorer-auth-v2',
         storage: window.localStorage,
-        // PKCE est le flow recommandé : il gère le multi-onglet nativement
-        // et ne crée pas de conflit de token entre fenêtres
-        flowType: 'pkce',
+        // NE PAS utiliser flowType: 'pkce' — le code_verifier est en sessionStorage
+        // (non partagé entre fenêtres) ce qui bloque le refresh dans les nouvelles fenêtres
       },
       global: {
         headers: { 'x-application-name': 'topsys-explorer-v2' },
