@@ -305,25 +305,13 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     const first = d1 <= d2 ? s1 : s2;
     const last = d1 <= d2 ? s2 : s1;
 
-    // Intersection des dates pour une comparaison loyale
-    const firstDaysMap = new Map(first.days.map(d => [d.date, d]));
-    const lastDaysMap = new Map(last.days.map(d => [d.date, d]));
-    const commonDates = Array.from(firstDaysMap.keys()).filter(d => lastDaysMap.has(d));
-    
-    if (commonDates.length === 0) return null;
-
-    const commonDaysFirst = commonDates.map(d => firstDaysMap.get(d)!);
-    const commonDaysLast = commonDates.map(d => lastDaysMap.get(d)!);
-
-    // Calcul des moyennes sur la plage commune
-    const fAvgRate = commonDaysFirst.reduce((sum, d) => sum + d.taux, 0) / commonDates.length;
-    const lAvgRate = commonDaysLast.reduce((sum, d) => sum + d.taux, 0) / commonDates.length;
-    const fTotalOcc = commonDaysFirst.reduce((sum, d) => sum + d.occupied_total, 0);
-    const lTotalOcc = commonDaysLast.reduce((sum, d) => sum + d.occupied_total, 0);
+    // Calcul direct T2 - T1 sur les valeurs globales pour cohérence visuelle
+    const rateDiff = last.avgRate - first.avgRate;
+    const occDiff = last.totalOcc - first.totalOcc;
 
     const occDiffByType = hotel.types.map(type => {
-      const v1 = commonDaysFirst.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
-      const v2 = commonDaysLast.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const v1 = first.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const v2 = last.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
       return {
         label: type.label,
         code: type.code,
@@ -334,17 +322,17 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }).filter(d => d.v1 > 0 || d.v2 > 0);
 
     return {
-      rateDiff: lAvgRate - fAvgRate,
-      occDiff: lTotalOcc - fTotalOcc,
-      firstRate: fAvgRate,
-      lastRate: lAvgRate,
-      firstOcc: fTotalOcc,
-      lastOcc: lTotalOcc,
+      rateDiff,
+      occDiff,
+      firstRate: first.avgRate,
+      lastRate: last.avgRate,
+      firstOcc: first.totalOcc,
+      lastOcc: last.totalOcc,
       firstLabel: first.label,
       lastLabel: last.label,
       occDiffByType,
       snapshotsCount: selectedSnaps.length,
-      daysCount: commonDates.length,
+      daysCount: last.days.length,
     };
   }, [enrichedSnaps, comparisonIds, hotel.types, selectedSnaps.length]);
 
@@ -792,7 +780,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                 <thead>
                   <tr className="border-b border-border text-text-dark">
                     <th className="text-left p-3 font-bold uppercase text-[10px]">Type</th>
-                    {enrichedSnaps.map((s, i) => {
+                    {selectedSnaps.map((s, i) => {
                       const incomplete = !s.hasRooms;
                       return (
                         <th key={s.id} className={cn("p-3 text-center font-bold text-[10px]", incomplete && "opacity-50 group/snap relative")}>
