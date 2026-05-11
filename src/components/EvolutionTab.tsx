@@ -258,32 +258,34 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
       let diff = 0;
       if (comparisonIds) {
-        let s1 = enrichedSnaps.find(s => s.id === comparisonIds[0]);
-        let s2 = enrichedSnaps.find(s => s.id === comparisonIds[1]);
-        if (s1 && s2) {
-          const d1 = s1.edition_date || s1.import_date || '';
-          const d2 = s2.edition_date || s2.import_date || '';
-          const firstIdx = selectedSnaps.findIndex(s => s.id === (d1 <= d2 ? s1!.id : s2!.id));
-          const lastIdx = selectedSnaps.findIndex(s => s.id === (d1 <= d2 ? s2!.id : s1!.id));
-
-          if (firstIdx !== -1 && lastIdx !== -1) {
-            const r1 = bySnap[firstIdx].rate;
-            const r2 = bySnap[lastIdx].rate;
-            if (r1 !== null && r2 !== null) diff = r2 - r1;
+        const t1snap = enrichedSnaps.find(s => s.id === comparisonIds[0]);
+        const t2snap = enrichedSnaps.find(s => s.id === comparisonIds[1]);
+        if (t1snap && t2snap) {
+          const da = t1snap.edition_date || t1snap.import_date || '';
+          const db = t2snap.edition_date || t2snap.import_date || '';
+          const older = da <= db ? t1snap : t2snap;
+          const newer  = da <= db ? t2snap : t1snap;
+          const olderMap = new Map(older.days.map(d => [d.date, d]));
+          const newerMap  = new Map(newer.days.map(d => [d.date, d]));
+          const common = Array.from(olderMap.keys()).filter(d => newerMap.has(d));
+          if (common.length > 0) {
+            const cap = type.capacity * common.length;
+            const r1 = cap > 0
+              ? (common.reduce((s, d) => s + (olderMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0) / cap) * 100
+              : 0;
+            const r2 = cap > 0
+              ? (common.reduce((s, d) => s + (newerMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0) / cap) * 100
+              : 0;
+            diff = r2 - r1;
           }
         }
       } else {
         const firstValid = validForTrend[0].rate!;
-        const lastValid = validForTrend[validForTrend.length - 1].rate!;
+        const lastValid  = validForTrend[validForTrend.length - 1].rate!;
         diff = lastValid - firstValid;
       }
 
-      return {
-        type: type.label,
-        code: type.code,
-        bySnap,
-        diff,
-      };
+      return { type: type.label, code: type.code, bySnap, diff };
     }).filter(Boolean) as {
       type: string;
       code: string;
@@ -292,47 +294,73 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }[];
   }, [selectedSnaps, hotel.types, comparisonIds, enrichedSnaps]);
 
-  // 5. KPIs
+  // 5. KPIs — calculés sur les DATES COMMUNES aux deux snapshots (évite le biais de plage)
   const kpis = useMemo(() => {
     if (!comparisonIds) return null;
-    let s1 = enrichedSnaps.find(s => s.id === comparisonIds[0]);
-    let s2 = enrichedSnaps.find(s => s.id === comparisonIds[1]);
+    const s1 = enrichedSnaps.find(s => s.id === comparisonIds[0]);
+    const s2 = enrichedSnaps.find(s => s.id === comparisonIds[1]);
     if (!s1 || !s2) return null;
 
-    // Toujours comparer le plus récent au plus ancien, peu importe l'ordre de clic
+    // Tri chronologique : first = le plus ancien, last = le plus récent
     const d1 = s1.edition_date || s1.import_date || '';
     const d2 = s2.edition_date || s2.import_date || '';
     const first = d1 <= d2 ? s1 : s2;
-    const last = d1 <= d2 ? s2 : s1;
+    const last  = d1 <= d2 ? s2 : s1;
 
-    // Calcul direct T2 - T1 sur les valeurs globales pour cohérence visuelle
-    const rateDiff = last.avgRate - first.avgRate;
-    const occDiff = last.totalOcc - first.totalOcc;
+    // ── Intersection des dates ────────────────────────────────────────────────
+    // CRITIQUE : comparer sur la même période pour que taux et volume soient
+    // cohérents entre eux. Sans ça, un snapshot couvrant plus de jours aura
+    // mécaniquement un taux moyen plus bas même si les ventes progressent.
+    const firstDaysMap = new Map(first.days.map(d => [d.date, d]));
+    const lastDaysMap  = new Map(last.days.map(d =>  [d.date, d]));
+    const commonDates  = Array.from(firstDaysMap.keys()).filter(d => lastDaysMap.has(d)).sort();
 
-    const occDiffByType = hotel.types.map(type => {
-      const v1 = first.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
-      const v2 = last.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+    if (commonDates.length === 0) {
       return {
-        label: type.label,
-        code: type.code,
-        diff: v2 - v1,
-        v1,
-        v2
+        rateDiff: 0, occDiff: 0,
+        firstRate: first.avgRate, lastRate: last.avgRate,
+        firstOcc: first.totalOcc, lastOcc: last.totalOcc,
+        firstLabel: first.label, lastLabel: last.label,
+        occDiffByType: [], snapshotsCount: selectedSnaps.length,
+        daysCount: last.days.length, commonDatesCount: 0, noCommonDates: true,
       };
+    }
+
+    const firstCommon = commonDates.map(d => firstDaysMap.get(d)!);
+    const lastCommon  = commonDates.map(d => lastDaysMap.get(d)!);
+
+    // Taux moyen sur dates communes
+    const firstAvgRate = firstCommon.reduce((s, d) => s + d.taux, 0) / commonDates.length;
+    const lastAvgRate  = lastCommon.reduce((s, d)  => s + d.taux, 0) / commonDates.length;
+
+    // Volume de chambres vendues sur dates communes
+    const firstTotalOcc = firstCommon.reduce((s, d) => s + d.occupied_total, 0);
+    const lastTotalOcc  = lastCommon.reduce((s, d)  => s + d.occupied_total, 0);
+
+    const rateDiff = lastAvgRate - firstAvgRate;
+    const occDiff  = lastTotalOcc - firstTotalOcc;
+
+    // Évolution par type sur dates communes
+    const occDiffByType = hotel.types.map(type => {
+      const v1 = firstCommon.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const v2 = lastCommon.reduce((sum, d)  => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      return { label: type.label, code: type.code, diff: v2 - v1, v1, v2 };
     }).filter(d => d.v1 > 0 || d.v2 > 0);
 
     return {
       rateDiff,
       occDiff,
-      firstRate: first.avgRate,
-      lastRate: last.avgRate,
-      firstOcc: first.totalOcc,
-      lastOcc: last.totalOcc,
+      firstRate: firstAvgRate,
+      lastRate: lastAvgRate,
+      firstOcc: firstTotalOcc,
+      lastOcc: lastTotalOcc,
       firstLabel: first.label,
       lastLabel: last.label,
       occDiffByType,
       snapshotsCount: selectedSnaps.length,
       daysCount: last.days.length,
+      commonDatesCount: commonDates.length,
+      noCommonDates: false,
     };
   }, [enrichedSnaps, comparisonIds, hotel.types, selectedSnaps.length]);
 
@@ -561,23 +589,24 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
       {snapshots.length >= 2 && kpis && (
         <>
-          {/* Info plage effective */}
+          {/* Info plage de comparaison effective */}
           {dateRange && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-surf1 border border-border rounded-xl text-xs text-text-dark">
               <CalendarRange size={13} className="text-gold shrink-0" />
               <span>
                 Plage effective : <strong className="text-text">{fmtDate(dateRange.min)}</strong> → <strong className="text-text">{fmtDate(dateRange.max)}</strong> ·{' '}
                 <strong className="text-text">{kpis.snapshotsCount}</strong> snapshots ·{' '}
-                <strong className="text-text">{kpis.daysCount}</strong> jours communs
+                <strong className={kpis.commonDatesCount > 0 ? "text-green" : "text-red"}>{kpis.commonDatesCount ?? kpis.daysCount}</strong> dates communes
+                {kpis.commonDatesCount > 0 && <span className="text-text-dark/50 ml-1">(calculs sur cette intersection)</span>}
               </span>
             </div>
           )}
 
-          {snapshots.length >= 2 && deltaChart.length === 0 && (
+          {(kpis.noCommonDates || deltaChart.length === 0) && (
             <div className="flex items-center gap-2 px-4 py-2.5 bg-red/10 border border-red/20 rounded-xl text-xs text-red">
               <AlertTriangle size={13} className="shrink-0" />
               <span>
-                <strong>Attention :</strong> Les snapshots sélectionnés n'ont aucune date en commun et ne peuvent pas être comparés pour le calcul du delta.
+                <strong>Aucune date commune</strong> entre les deux rapports sélectionnés — les KPIs de comparaison ne peuvent pas être calculés. Sélectionnez deux rapports qui couvrent la même période.
               </span>
             </div>
           )}

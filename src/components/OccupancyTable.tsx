@@ -40,7 +40,7 @@ export function OccupancyTable({ report, config, hotel, filters, visibleCols, fo
                   title="Cliquer pour le détail"
                 >
                   <div className={cn(dl.isWk ? "text-gold" : "text-text-dim")}>{dl.day.split(' ')[0]}</div>
-                  <div className="text-[9px] mt-0.5">{dl.day.split(' ')[1]}</div>
+                  <div className="text-[9px] mt-0.5 tabular-nums">{dl.short}</div>
                 </th>
               );
             })}
