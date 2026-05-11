@@ -167,15 +167,21 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
         overlapsAny,
         hasRooms,
         isSelected: selectedIds.has(s.id),
-        label: snapLabel(s)
+        label: snapLabel(s),
+        tauxGlobal
       };
     });
   }, [snapshots, selectedIds, dateFrom, dateTo]);
 
-  const selectedSnaps = useMemo(() => 
-    enrichedSnaps.filter(s => s.isSelected),
-    [enrichedSnaps]
-  );
+  const selectedSnaps = useMemo(() => {
+    return enrichedSnaps
+      .filter(s => s.isSelected)
+      .sort((a, b) => {
+        const da = a.edition_date || a.import_date || '';
+        const db = b.edition_date || b.import_date || '';
+        return da.localeCompare(db);
+      });
+  }, [enrichedSnaps]);
 
   // 1. Évolution du taux moyen par snapshot (barre)
   const avgRateChart = useMemo(() =>
@@ -275,6 +281,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
           const common = Array.from(olderMap.keys()).filter(d => newerMap.has(d));
 
           if (common.length > 0 && viewMode === 'rate') {
+            // Pour le taux, on privilégie les dates communes pour une comparaison RM rigoureuse
             const cap = type.capacity * common.length;
             const v1 = common.reduce((s, d) => s + (olderMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0);
             const v2 = common.reduce((s, d) => s + (newerMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0);
@@ -283,7 +290,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
             const r2 = cap > 0 ? (v2 / cap) * 100 : 0;
             diff = r2 - r1;
           } else {
-            // Pour le volume ou si pas de dates communes, on prend la différence brute des totaux affichés
+            // Pour le volume, B-A pur sur les totaux cumulés
             const bOlder = bySnap.find(b => b.snapshotLabel === older.label);
             const bNewer = bySnap.find(b => b.snapshotLabel === newer.label);
             
@@ -840,6 +847,10 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
                             <span className="text-[8px] text-text-dark font-normal opacity-70">
                               {s.period_str ? s.period_str.replace(/^du\s+/i, '') : ''}
                             </span>
+                            {/* Taux global sous le nom du rapport */}
+                            <div className="mt-1.5 px-2 py-0.5 bg-gold/10 text-gold rounded font-bold text-[9px]">
+                              {s.tauxGlobal}%
+                            </div>
                           </div>
                           
                           {/* Bouton de suppression au survol */}
@@ -876,8 +887,10 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
                             {te.diff > 0 ? <ArrowUpRight size={10} /> : te.diff < 0 ? <ArrowDownRight size={10} /> : null}
                             {te.diff > 0 ? '+' : ''}{viewMode === 'rate' ? `${te.diff.toFixed(1)}%` : te.diff}
                           </div>
-                          {/* Indication pour expliquer l'écart avec les totaux si besoin */}
-                          <span className="text-[7px] text-text-dark opacity-50 whitespace-nowrap mt-0.5">dates communes</span>
+                          {/* Indication uniquement si on utilise les dates communes pour le taux */}
+                          {viewMode === 'rate' && (
+                            <span className="text-[7px] text-text-dark opacity-50 whitespace-nowrap mt-0.5">dates communes</span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -888,7 +901,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
                     <td className="p-3 text-text uppercase text-[10px] tracking-wider">Total (Global)</td>
                     {selectedSnaps.map((s, i) => (
                       <td key={s.id} className="p-3 text-center font-mono text-text">
-                        {Math.round(s.avgRate * 10) / 10}%
+                        {s.tauxGlobal}%
                       </td>
                     ))}
                     <td className="p-3 text-center">
