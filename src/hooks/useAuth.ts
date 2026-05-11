@@ -114,17 +114,24 @@ export function useAuth(): AuthState {
     const lastCheckRef = { current: 0 }
 
     const initSession = async () => {
+      logger.debug('Auth', 'Exécution initSession (check direct)...');
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          logger.warn('Auth', 'Erreur getSession initial', error);
+        }
         if (session?.user && !initializedRef.current) {
-          logger.debug('Auth', 'Session initiale détectée via getSession');
+          logger.info('Auth', 'Session initiale détectée via getSession', { userId: session.user.id });
           setUser(session.user)
           await loadProfile(session.user.id, false)
+        } else {
+          logger.debug('Auth', 'Aucune session initiale trouvée via getSession');
         }
       } catch (e) {
-        logger.warn('Auth', 'Échec check session initial', e)
+        logger.warn('Auth', 'Exception check session initial', e)
       } finally {
         if (!initializedRef.current) {
+          logger.info('Auth', 'Initialisation terminée via getSession (succès ou échec)');
           initializedRef.current = true
           setLoading(false)
         }
@@ -176,11 +183,11 @@ export function useAuth(): AuthState {
 
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
-        logger.warn('Auth', 'Timeout d\'initialisation (10s) force la levée du chargement');
+        logger.warn('Auth', 'Timeout d\'initialisation (25s) force la levée du chargement');
         initializedRef.current = true
         setLoading(false)
       }
-    }, 10000)
+    }, 25000)
 
     return () => {
       subscription.unsubscribe()

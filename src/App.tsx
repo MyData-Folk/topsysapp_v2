@@ -50,21 +50,31 @@ export default function App() {
     }
   }, [auth.profile]);
 
+  const configLoadedRef = useRef(false);
+  const lastUserRef = useRef<string | null>(null);
+
   // Activation du CloudSync et chargement au login
   useEffect(() => {
-    if (auth.user) {
+    if (auth.user && !auth.loading) {
+      // Éviter de charger plusieurs fois pour le même utilisateur
+      if (lastUserRef.current === auth.user.id && configLoadedRef.current) return;
+      
+      lastUserRef.current = auth.user.id;
+      configLoadedRef.current = true;
+      
       // On active la synchro cloud d'office si on est connecté
       if (!store.config.cloudSync) {
         store.updateConfig({ cloudSync: true });
       }
       
-      // Chargement de la config Cloud avec timeout de 5s
+      logger.info('App', 'Démarrage chargement config Cloud...');
+      // Chargement de la config Cloud avec timeout de 20s
       const cloudPromise = loadCloudConfig();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_CLOUD')), 15000));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_CLOUD')), 20000));
 
       Promise.race([cloudPromise, timeoutPromise]).then(cloudConfig => {
         if (cloudConfig) {
-          logger.info('App', 'Config Cloud appliquée');
+          logger.info('App', 'Config Cloud récupérée et appliquée');
           store.setConfig(prev => ({ ...DEFAULT_CONFIG, ...prev, ...cloudConfig as any, cloudSync: true }));
           
           if ((cloudConfig as any).lastFilters) {
@@ -75,16 +85,22 @@ export default function App() {
               dows: new Set(f.dows || [0,1,2,3,4,5,6])
             });
           }
+        } else {
+          logger.debug('App', 'Aucune config Cloud trouvée, utilisation du local');
         }
       }).catch(err => {
         if (err.message === 'TIMEOUT_CLOUD') {
-          logger.warn('App', 'Chargement Cloud trop long, continuation avec local');
+          logger.warn('App', 'Chargement Cloud trop long (20s), continuation avec local');
         } else {
-          logger.error('App', 'Erreur Cloud Config', err);
+          logger.error('App', 'Erreur critique Cloud Config', err);
         }
       });
+    } else if (!auth.user && !auth.loading) {
+      // Reset des flags si déconnexion
+      configLoadedRef.current = false;
+      lastUserRef.current = null;
     }
-  }, [auth.user]);
+  }, [auth.user, auth.loading]);
 
   // La synchronisation automatique est désactivée pour laisser le choix à l'utilisateur (Mode manuel via ImportTab)
   useEffect(() => {
