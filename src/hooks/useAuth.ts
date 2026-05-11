@@ -114,76 +114,93 @@ export function useAuth(): AuthState {
     const lastCheckRef = { current: 0 }
 
     const initSession = async () => {
-      logger.debug('Auth', 'Exécution initSession (check direct)...');
+      logger.debug('Auth', 'initSession: vérification directe de la session...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         if (error) {
-          logger.warn('Auth', 'Erreur getSession initial', error);
+          logger.warn('Auth', 'initSession: erreur getSession', { code: error.status, msg: error.message });
         }
-        if (session?.user && !initializedRef.current) {
-          logger.info('Auth', 'Session initiale détectée via getSession', { userId: session.user.id });
+        if (session?.user) {
+          logger.info('Auth', 'initSession: session valide trouvée', { userId: session.user.id, expires: session.expires_at });
           setUser(session.user)
-          await loadProfile(session.user.id, false)
+          // Profil chargé en arrière-plan — ne bloque PAS le loading
+          loadProfile(session.user.id, false).catch(e =>
+            logger.warn('Auth', 'initSession: erreur loadProfile (non bloquant)', e)
+          )
         } else {
-          logger.debug('Auth', 'Aucune session initiale trouvée via getSession');
+          logger.debug('Auth', 'initSession: aucune session active');
         }
       } catch (e) {
-        logger.warn('Auth', 'Exception check session initial', e)
+        logger.warn('Auth', 'initSession: exception inattendue', e)
       } finally {
+        // On lève le loading dès qu'on connaît l'état de la session — profil ou pas
         if (!initializedRef.current) {
-          logger.info('Auth', 'Initialisation terminée via getSession (succès ou échec)');
+          logger.info('Auth', 'initSession: loading levé');
           initializedRef.current = true
           setLoading(false)
         }
       }
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null
-      logger.info('Auth', `Événement: ${event}`, { userId: u?.id, email: u?.email });
+      logger.info('Auth', `Événement auth: ${event}`, {
+        userId: u?.id,
+        email: u?.email,
+        expires: session?.expires_at,
+        initDone: initializedRef.current
+      });
+
+      // 1. Mise à jour immédiate de l'état user (synchrone)
       setUser(u)
 
-      try {
-        if (u) {
-          await loadProfile(u.id, event === 'SIGNED_IN')
-        } else {
-          fetchIdRef.current++
-          setProfile(null)
-        }
-      } finally {
-        if (!initializedRef.current) {
-          logger.info('Auth', 'Initialisation terminée via event');
-          initializedRef.current = true
-          setLoading(false)
-        }
+      // 2. Lever le loading dès qu'on connaît l'état — sans attendre le profil
+      if (!initializedRef.current) {
+        logger.info('Auth', `Event ${event}: loading levé immédiatement`);
+        initializedRef.current = true
+        setLoading(false)
+      }
+
+      // 3. Chargement du profil en arrière-plan (asynchrone, ne bloque rien)
+      if (u) {
+        loadProfile(u.id, event === 'SIGNED_IN').catch(e =>
+          logger.warn('Auth', 'onAuthStateChange: erreur loadProfile (non bloquant)', e)
+        )
+      } else {
+        fetchIdRef.current++
+        setProfile(null)
+        localStorage.removeItem('topsys_auth_profile_cache')
       }
     })
 
-    // On lance un check immédiat pour ne pas attendre l'event (plus rapide au reload)
+    // Check direct immédiat (n'attend pas l'event onAuthStateChange)
     initSession();
 
-    // Sécurité: Forcer la vérification de la session quand l'onglet redevient actif (max 1x toutes les 5 min)
+    // Vérification périodique au retour sur l'onglet (max 1x/5min)
     const handleVisibilityChange = () => {
       const now = Date.now();
       if (document.visibilityState === 'visible' && supabase && (now - lastCheckRef.current > 300000)) {
         lastCheckRef.current = now;
-        logger.debug('Auth', 'Onglet actif: vérification périodique de la session...');
+        logger.debug('Auth', 'Onglet réactivé: refresh session...');
         supabase.auth.getSession().then(({ data: { session }, error }) => {
-          if (error || !session) {
-            if (user) {
-              logger.warn('Auth', 'Session perdue ou expirée au retour sur l\'onglet');
-              setUser(null);
-              setProfile(null);
-            }
+          if (error) {
+            logger.warn('Auth', 'Onglet réactivé: erreur getSession', error);
+          } else if (!session) {
+            logger.warn('Auth', 'Onglet réactivé: session expirée — déconnexion');
+            setUser(null);
+            setProfile(null);
+          } else {
+            logger.debug('Auth', 'Onglet réactivé: session encore valide', { expires: session.expires_at });
           }
         });
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Filet de sécurité ultime : si ni initSession ni l'event ne se terminent en 25s
     const timeout = setTimeout(() => {
       if (!initializedRef.current) {
-        logger.warn('Auth', 'Timeout d\'initialisation (25s) force la levée du chargement');
+        logger.warn('Auth', 'TIMEOUT 25s — loading forcé. Vérifier la connectivité Supabase.');
         initializedRef.current = true
         setLoading(false)
       }
