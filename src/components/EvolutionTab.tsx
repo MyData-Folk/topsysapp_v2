@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight,
-  BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle, Trash2
+  BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle, Trash2, Users
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -646,7 +646,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
             <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest mb-5 flex items-center gap-2">
               <TrendingUp size={12} className="text-gold" /> Taux d'occupation moyen par snapshot
             </h3>
-            <div className="h-[260px] min-w-[420px]">
+            <div className="h-[260px] min-w-[420px] relative">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={avgRateChart} barCategoryGap="30%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
@@ -672,7 +672,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
             <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest mb-5 flex items-center gap-2">
               <TrendingUp size={12} className="text-blue" /> Taux journalier par snapshot (superposition)
             </h3>
-            <div className="h-[280px] min-w-[500px]">
+            <div className="h-[280px] min-w-[500px] relative">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <LineChart data={dailyChart}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
@@ -720,7 +720,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
               <p className="text-[10px] text-text-dark mb-5">
                 Positif = des chambres supplémentaires ont été réservées · Négatif = des annulations
               </p>
-              <div className="h-[240px] min-w-[500px]">
+              <div className="h-[240px] min-w-[500px] relative">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <BarChart data={deltaChart} barCategoryGap="20%">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
