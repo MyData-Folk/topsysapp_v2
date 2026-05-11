@@ -842,6 +842,27 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                     </tr>
                   ))}
                 </tbody>
+                <tfoot className="bg-surf2/30 font-bold border-t-2 border-border">
+                  <tr>
+                    <td className="p-3 text-text uppercase text-[10px] tracking-wider">Total (Global)</td>
+                    {selectedSnaps.map((s, i) => (
+                      <td key={s.id} className="p-3 text-center font-mono text-text">
+                        {Math.round(s.avgRate * 10) / 10}%
+                      </td>
+                    ))}
+                    <td className="p-3 text-center">
+                      {kpis && (
+                        <span className={cn(
+                          "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm",
+                          kpis.rateDiff > 1 ? "bg-green text-bg" : kpis.rateDiff < -1 ? "bg-red text-bg" : "bg-gold text-bg"
+                        )}>
+                          {kpis.rateDiff > 0 ? <TrendingUp size={12} /> : kpis.rateDiff < 0 ? <TrendingDown size={12} /> : <Minus size={12} />}
+                          {kpis.rateDiff > 0 ? '+' : ''}{kpis.rateDiff.toFixed(1)}%
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}
