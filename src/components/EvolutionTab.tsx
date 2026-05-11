@@ -66,6 +66,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [comparisonIds, setComparisonIds] = useState<[string, string] | null>(null);
   const isFetchingRef = useRef(false);
+  const lastHotelIdRef = useRef<string | null>(null);
 
   const canLoad = auth.user && hotel?.supabaseRegistered;
 
@@ -118,22 +119,25 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }
   }, [canLoad, hotel?.id, dateFrom, dateTo]);
 
-  // Recharger automatiquement si hôtel change ou au montage
+  // Gestion du cycle de vie des données (Reset sur changement d'hôtel + Chargement auto)
   useEffect(() => {
-    if (canLoad && hotel && !loaded && !loading) {
-      logger.debug('Evolution', 'Déclenchement chargement auto', { hotelId: hotel.id, loaded, loading });
+    if (!hotel?.id || !canLoad) return;
+
+    // Si l'hôtel a réellement changé, on reset
+    if (lastHotelIdRef.current !== hotel.id) {
+      logger.debug('Evolution', 'Changement hôtel détecté, reset état', { from: lastHotelIdRef.current, to: hotel.id });
+      lastHotelIdRef.current = hotel.id;
+      setSnapshots([]);
+      setLoaded(false);
+      return; // On laisse le prochain cycle de render lancer le chargement via le bloc suivant
+    }
+
+    // Chargement si nécessaire
+    if (!loaded && !loading && !isFetchingRef.current) {
+      logger.debug('Evolution', 'Déclenchement chargement auto', { hotelId: hotel.id });
       load();
     }
   }, [canLoad, hotel?.id, loaded, loading, load]);
-
-  // Reset si hôtel change physiquement
-  useEffect(() => {
-    if (hotel?.id) {
-      logger.debug('Evolution', 'Changement hôtel détecté, reset état', hotel.id);
-      setSnapshots([]);
-      setLoaded(false);
-    }
-  }, [hotel?.id]);
 
   // ── Données Filtrées/Sélectionnées ──────────────────────────────────────────
   
