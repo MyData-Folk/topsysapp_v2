@@ -9,6 +9,26 @@ import { AuthState } from '../hooks/useAuth';
 import { listReports, downloadReport, generateReportFilename, CloudReportMeta } from '../lib/supabaseStorage';
 import { logger } from '../utils/logger';
 
+// Normalise un nom d'hôtel pour la comparaison floue (accents, casse, caractères spéciaux)
+function normalizeName(s: string): string {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function hotelMatchesReport(hotelName: string, reportName: string | undefined): boolean {
+  if (!reportName) return false;
+  const h = normalizeName(hotelName);
+  const r = normalizeName(reportName);
+  // Inclusion directe ou mots significatifs communs (> 3 chars)
+  if (h.includes(r) || r.includes(h)) return true;
+  const hWords = h.split(' ').filter(w => w.length > 3);
+  return hWords.some(w => r.includes(w));
+}
+
 interface ImportTabProps {
   config: AppConfig;
   activeHotel: HotelConfig | null;
@@ -282,7 +302,7 @@ export function ImportTab({
                     showAllCloud ? "translate-x-3 bg-gold" : "bg-text-dark"
                   )} />
                 </div>
-                <span className="text-[10px] font-bold text-text-dark group-hover:text-text-dim transition-colors">Afficher tout</span>
+                <span className="text-[10px] font-bold text-text-dark group-hover:text-text-dim transition-colors">{activeHotel ? 'Tous les hôtels' : 'Afficher tout'}</span>
               </label>
             </div>
             <button
@@ -311,32 +331,28 @@ export function ImportTab({
             <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
               {cloudReports
                 .filter(r => {
-                  if (showAllCloud) return true;
-                  // Filtrage par hôtel sélectionné (recherche floue par nom)
-                  const hotelMatches = !activeHotel || (
-                    r.establishment_name?.toLowerCase().includes(activeHotel.name.toLowerCase()) ||
-                    activeHotel.name.toLowerCase().includes(r.establishment_name?.toLowerCase() || '')
-                  );
-                  // Filtrage par rapports déjà importés
-                  const isImported = reports.some(lr => lr.periodStr === r.period_str && lr.establishmentName === r.establishment_name);
-                  return hotelMatches && !isImported;
+                  // Sans hôtel actif OU toggle "tout afficher" : on montre tout
+                  if (showAllCloud || !activeHotel) return true;
+                  // Filtrage par hôtel sélectionné avec normalisation (gère les accents, casse)
+                  return hotelMatchesReport(activeHotel.name, r.establishment_name);
                 })
                 .sort((a, b) => {
-                  // 1. Priorité à l'hôtel sélectionné
-                  if (activeHotel) {
-                    const matchA = a.establishment_name?.toLowerCase().includes(activeHotel.name.toLowerCase()) || activeHotel.name.toLowerCase().includes(a.establishment_name?.toLowerCase() || '');
-                    const matchB = b.establishment_name?.toLowerCase().includes(activeHotel.name.toLowerCase()) || activeHotel.name.toLowerCase().includes(b.establishment_name?.toLowerCase() || '');
-                    if (matchA && !matchB) return -1;
-                    if (!matchA && matchB) return 1;
-                  }
+                  // 1. Non-importés en premier, importés en bas
+                  const aImported = reports.some(lr => lr.periodStr === a.period_str && lr.establishmentName === a.establishment_name);
+                  const bImported = reports.some(lr => lr.periodStr === b.period_str && lr.establishmentName === b.establishment_name);
+                  if (!aImported && bImported) return -1;
+                  if (aImported && !bImported) return 1;
                   // 2. Tri par date d'upload (plus récent en premier)
                   return new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime();
                 })
-                .map(r => (
+                .map(r => {
+                  const isImported = reports.some(lr => lr.periodStr === r.period_str && lr.establishmentName === r.establishment_name);
+                  return (
                 <div key={r.id} className="rounded-xl overflow-hidden">
                   <div
                     className={cn(
                       "group p-3 border transition-all cursor-pointer rounded-xl",
+                      isImported ? "opacity-50" : "",
                       previewReport?.id === r.id
                         ? "bg-gold/10 border-gold/30 rounded-b-none"
                         : "bg-surf2 border-transparent hover:border-border-hover"
@@ -348,7 +364,10 @@ export function ImportTab({
                         <Cloud size={11} className="text-gold shrink-0" />
                         <span className="truncate max-w-[240px]">{r.filename}</span>
                       </div>
-                      <Eye size={11} className="text-text-dark shrink-0 mt-0.5" />
+                      <div className="flex items-center gap-1.5">
+                        {isImported && <span className="text-[9px] bg-green/15 text-green px-1.5 py-0.5 rounded-full font-bold">Importé</span>}
+                        <Eye size={11} className="text-text-dark shrink-0 mt-0.5" />
+                      </div>
                     </div>
                     <div className="text-[9px] text-text-dark mt-1">
                       <span className="text-gold/80 font-bold">{r.establishment_name || 'Hôtel inconnu'}</span>
@@ -387,7 +406,8 @@ export function ImportTab({
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
