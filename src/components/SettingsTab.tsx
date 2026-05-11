@@ -263,9 +263,10 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Identity */}
-              <div className="bg-surf1 p-6 rounded-2xl border border-border">
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Identity */}
+                <div className="bg-surf1 p-6 rounded-2xl border border-border">
               <div className="flex items-center gap-2 text-gold font-serif text-lg mb-6"><LayoutDashboard size={20} /> Identité</div>
               <div className="space-y-4">
                 <Field label="Nom" value={activeHotel.name} onChange={v => onUpdateHotel({ name: v })} />
@@ -510,7 +511,7 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
               )}
             </div>
           </div>
-            </div>
+            </>
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw } from 'lucide-react';
+import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw, Cloud } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { OccupancyData, AppConfig, HotelConfig, FilterState } from '../types';
 import { useFilteredData } from '../hooks/useFilteredData';

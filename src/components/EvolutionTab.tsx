@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { AppConfig, HotelConfig } from '../types';
 import { AuthState } from '../hooks/useAuth';
-import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, dateRangeOfSnaps, deleteSnapshot } from '../lib/availabilitiesStorage';
+import { fetchSnapshotsForEvolution, SnapshotWithDays, DayAvailability, deleteSnapshot } from '../lib/availabilitiesStorage';
 import { cn } from '../utils/cn';
 
 interface EvolutionTabProps {
@@ -73,7 +73,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       // Dédoublonnage par date d'édition et hôtel
       const seen = new Set();
       result = result.filter(s => {
-        const key = `${s.edition_date}-${s.establishment_name}`;
+        const key = `${s.edition_date}-${s.hotel_id}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
@@ -148,8 +148,8 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     const first = list[0];
     const last = list[list.length - 1];
     if (first.id === last.id) return [];
-    const firstDates = new Set(first.days.map(d => d.date));
-    const lastDates = new Set(last.days.map(d => d.date));
+    const firstDates = new Set<string>(first.days.map(d => d.date));
+    const lastDates = new Set<string>(last.days.map(d => d.date));
     const commonDates = Array.from(firstDates).filter(d => lastDates.has(d)).sort();
 
     if (commonDates.length === 0) return [];
@@ -252,7 +252,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     try {
       await deleteSnapshot(id);
       onShowToast?.('Rapport supprimé avec succès', 'ok');
-      handleRefresh();
+      load();
     } catch (err: any) {
       onShowToast?.(err.message, 'error');
     }

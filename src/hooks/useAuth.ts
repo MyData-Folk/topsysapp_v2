@@ -10,6 +10,7 @@ export interface AuthState {
   role: UserRole | null
   isApproved: boolean
   isAdmin: boolean
+  isVisitor: boolean
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
