@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { FileUp, AlertCircle, Calendar, Trash2, Download, Cloud, RefreshCw, Eye, X } from 'lucide-react';
+import { FileUp, AlertCircle, Calendar, Trash2, Download, Cloud, RefreshCw, Eye, X, Search, History } from 'lucide-react';
 import { OccupancyData, AppConfig, HotelConfig } from '../types';
 import { parseTopsysPdf, detectEstablishmentName } from '../lib/pdfParser';
 import { cn } from '../utils/cn';
@@ -79,7 +79,12 @@ export function ImportTab({
   const [previewReport, setPreviewReport] = useState<CloudReportMeta | null>(null)
   const [importingId, setImportingId] = useState<string | null>(null)
   const [showAllCloud, setShowAllCloud] = useState(false)
-  const [cloudHotelFilter, setCloudHotelFilter] = useState<string>('auto')
+  const [searchTerm, setSearchTerm] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    const saved = localStorage.getItem('topsys_recent_searches');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showHistory, setShowHistory] = useState(false);
 
   // Stable refs so handleFile never needs to be recreated when config/hotel change
   const configRef = React.useRef(config)
@@ -323,19 +328,61 @@ export function ImportTab({
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={cloudHotelFilter}
-                onChange={e => setCloudHotelFilter(e.target.value)}
-                className="text-[10px] bg-surf2 border border-border rounded-md px-2 py-1 focus:outline-none focus:border-gold/50 text-text"
-              >
-                <option value="auto">{activeHotel ? `Filtrer : ${activeHotel.name}` : 'Sélectionner un hôtel'}</option>
-                <option value="all">Tous les hôtels</option>
-                <hr className="my-1 border-border/50" />
-                {config.hotels.map(h => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </select>
+            <div className="flex items-center gap-2 flex-1 max-w-md relative">
+              <div className="relative flex-1">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dark" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un hôtel, un fichier..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  onFocus={() => setShowHistory(true)}
+                  onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && searchTerm.trim()) {
+                      const newRecent = [searchTerm.trim(), ...recentSearches.filter(s => s !== searchTerm.trim())].slice(0, 5);
+                      setRecentSearches(newRecent);
+                      localStorage.setItem('topsys_recent_searches', JSON.stringify(newRecent));
+                      setShowHistory(false);
+                    }
+                  }}
+                  className="w-full bg-surf2 border border-border rounded-lg pl-8 pr-8 py-1.5 text-[10px] focus:outline-none focus:border-gold/50 text-text"
+                />
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-dark hover:text-text"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+
+                {/* Historique */}
+                {showHistory && recentSearches.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-surf1 border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className="p-2 border-b border-border bg-surf2 flex justify-between items-center">
+                      <span className="text-[9px] font-bold text-text-dark uppercase tracking-widest">Recherches récentes</span>
+                      <button 
+                        onClick={() => { setRecentSearches([]); localStorage.removeItem('topsys_recent_searches'); }}
+                        className="text-[9px] text-red hover:underline"
+                      >
+                        Effacer
+                      </button>
+                    </div>
+                    {recentSearches.map((s, i) => (
+                      <div 
+                        key={i}
+                        onClick={() => { setSearchTerm(s); setShowHistory(false); }}
+                        className="p-2 text-[10px] hover:bg-gold/10 cursor-pointer flex items-center gap-2 transition-colors"
+                      >
+                        <History size={10} className="text-text-dark" />
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={fetchCloudReports}
                 disabled={loadingCloud}
@@ -362,22 +409,25 @@ export function ImportTab({
           ) : (() => {
             // Filtrage appliqué
             const filtered = cloudReports.filter(r => {
-              if (cloudHotelFilter === 'all') return true;
-              
-              let targetHotel = activeHotel;
-              if (cloudHotelFilter !== 'auto') {
-                targetHotel = config.hotels.find(h => h.id === cloudHotelFilter) || null;
+              // 1. Filtre global (si désactivé, on ne montre que l'hôtel actif)
+              if (!showAllCloud && activeHotel) {
+                if (!hotelMatchesReport(activeHotel, r.establishment_name, r.filename)) return false;
+              }
+
+              // 2. Recherche textuelle
+              if (searchTerm.trim()) {
+                const s = normalizeName(searchTerm);
+                const matchName = r.establishment_name && normalizeName(r.establishment_name).includes(s);
+                const matchFile = r.filename && normalizeName(r.filename).includes(s);
+                if (!matchName && !matchFile) return false;
               }
               
-              if (!targetHotel) return true;
-              const match = hotelMatchesReport(targetHotel, r.establishment_name, r.filename);
-              
-              if (!match && !showAllCloud) {
-                // Log uniquement si on cherche vraiment à filtrer
-                logger.debug('ImportTab', `Filtre échoué: "${targetHotel.name}" (alias: "${targetHotel.cloudAlias}") vs "${r.establishment_name}" / "${r.filename}"`);
-              }
-              
-              return match;
+              return true;
+            }).sort((a, b) => {
+              // Tri par date d'édition décroissante (plus récent en haut)
+              const dateA = a.edition_date || a.created_at || '';
+              const dateB = b.edition_date || b.created_at || '';
+              return dateB.localeCompare(dateA);
             });
 
             if (filtered.length === 0) {
