@@ -23,10 +23,20 @@ function hotelMatchesReport(hotelName: string, reportName: string | undefined): 
   if (!reportName) return false;
   const h = normalizeName(hotelName);
   const r = normalizeName(reportName);
-  // Inclusion directe ou mots significatifs communs (> 3 chars)
-  if (h.includes(r) || r.includes(h)) return true;
-  const hWords = h.split(' ').filter(w => w.length > 3);
-  return hWords.some(w => r.includes(w));
+  
+  // 1. Correspondance exacte ou inclusion totale
+  if (h === r || h.includes(r) || r.includes(h)) return true;
+  
+  // 2. Intersection de mots significatifs
+  const hWords = h.split(' ').filter(w => w.length >= 3);
+  const rWords = r.split(' ').filter(w => w.length >= 3);
+  
+  // Si on n'a pas de mots longs, on prend tous les mots
+  const hFinal = hWords.length > 0 ? hWords : h.split(' ').filter(w => w.length > 0);
+  const rFinal = rWords.length > 0 ? rWords : r.split(' ').filter(w => w.length > 0);
+  
+  // Si l'un des mots de l'hôtel est dans le nom du rapport, ou vice-versa
+  return hFinal.some(w => r.includes(w)) || rFinal.some(w => h.includes(w));
 }
 
 interface ImportTabProps {
@@ -333,7 +343,11 @@ export function ImportTab({
             // Filtrage appliqué
             const filtered = cloudReports.filter(r => {
               if (showAllCloud || !activeHotel) return true;
-              return hotelMatchesReport(activeHotel.name, r.establishment_name);
+              const match = hotelMatchesReport(activeHotel.name, r.establishment_name);
+              if (!match && cloudReports.length > 0 && !showAllCloud) {
+                logger.debug('ImportTab', `Filtrage rapport: No match entre "${activeHotel.name}" et "${r.establishment_name}"`);
+              }
+              return match;
             });
 
             if (filtered.length === 0) {
