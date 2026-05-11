@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight,
-  BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle, Trash2, Users
+  BarChart3, RefreshCw, Database, CalendarRange, AlertTriangle, Trash2, Users, Printer
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -107,9 +107,9 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
       // Par défaut, on sélectionne tout
       setSelectedIds(new Set(result.map(s => s.id)));
       
-      // Références de comparaison : les deux plus récents
+      // Références de comparaison : Premier et Dernier par défaut
       if (result.length >= 2) {
-        setComparisonIds([result[result.length - 2].id, result[result.length - 1].id]);
+        setComparisonIds([result[0].id, result[result.length - 1].id]);
       } else {
         setComparisonIds(null);
       }
@@ -273,17 +273,26 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
           const olderMap = new Map(older.days.map(d => [d.date, d]));
           const newerMap  = new Map(newer.days.map(d => [d.date, d]));
           const common = Array.from(olderMap.keys()).filter(d => newerMap.has(d));
-          if (common.length > 0) {
+
+          if (common.length > 0 && viewMode === 'rate') {
             const cap = type.capacity * common.length;
             const v1 = common.reduce((s, d) => s + (olderMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0);
             const v2 = common.reduce((s, d) => s + (newerMap.get(d)!.rooms[type.code]?.occupied ?? 0), 0);
             
-            if (viewMode === 'volume') {
-              diff = v2 - v1;
-            } else {
-              const r1 = cap > 0 ? (v1 / cap) * 100 : 0;
-              const r2 = cap > 0 ? (v2 / cap) * 100 : 0;
-              diff = r2 - r1;
+            const r1 = cap > 0 ? (v1 / cap) * 100 : 0;
+            const r2 = cap > 0 ? (v2 / cap) * 100 : 0;
+            diff = r2 - r1;
+          } else {
+            // Pour le volume ou si pas de dates communes, on prend la différence brute des totaux affichés
+            const bOlder = bySnap.find(b => b.snapshotLabel === older.label);
+            const bNewer = bySnap.find(b => b.snapshotLabel === newer.label);
+            
+            if (bOlder && bNewer) {
+              if (viewMode === 'volume') {
+                diff = (bNewer.occupied || 0) - (bOlder.occupied || 0);
+              } else {
+                diff = (bNewer.rate || 0) - (bOlder.rate || 0);
+              }
             }
           }
         }
@@ -423,6 +432,12 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
               snapshot par snapshot, pour <strong className="text-text">{hotel.name}</strong>.
             </p>
           </div>
+          <button 
+            onClick={() => window.print()} 
+            className="px-4 py-2 bg-gold/10 border border-gold/30 text-gold text-xs font-bold rounded-xl hover:bg-gold/20 transition-all flex items-center gap-2 no-print"
+          >
+            <Printer size={14} /> IMPRIMER PDF
+          </button>
         </div>
 
         {!auth.user ? (
@@ -902,6 +917,28 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
           <p className="text-sm">Sélectionnez une plage de dates et cliquez sur <strong>Charger</strong>.</p>
         </div>
       )}
+      {/* Styles d'impression pour améliorer la qualité du PDF */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: landscape; margin: 1cm; }
+          body { background: white !important; color: black !important; font-family: sans-serif; }
+          .no-print, nav, header, aside, button, .tabs-nav { display: none !important; }
+          .print-only { display: block !important; }
+          .bg-surf1, .bg-surf2, .bg-surf3 { background: white !important; border: 1px solid #ddd !important; }
+          .text-text, .text-text-dim { color: black !important; }
+          .text-text-dark { color: #555 !important; }
+          .border-border { border-color: #ccc !important; }
+          .rounded-2xl, .rounded-xl { border-radius: 4px !important; }
+          .shadow-sm, .shadow-xl { box-shadow: none !important; }
+          table { width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important; margin-bottom: 20px; }
+          th, td { border: 1px solid #ccc !important; padding: 6px 4px !important; text-align: center; }
+          th { background: #f9f9f9 !important; font-weight: bold; }
+          .chart-container { height: 250px !important; page-break-inside: avoid; border: 1px solid #eee; margin: 10px 0; }
+          h1, h2, h3 { color: black !important; margin: 15px 0 !important; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .kpi-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 15px !important; margin-bottom: 20px; }
+          .font-mono { font-family: monospace !important; }
+        }
+      `}} />
     </div>
   );
 }
