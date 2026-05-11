@@ -77,3 +77,12 @@ export interface FilterState {
   dows: Set<number>;
   showOnlyFiltered: boolean;
 }
+
+export interface EvolutionState {
+  dateFrom: string;
+  dateTo: string;
+  selectedIds: Set<string>;
+  comparisonIds: [string, string] | null;
+  viewMode: 'rate' | 'volume';
+  snapshots: any[]; // On peut typer plus finement si nécessaire, mais snapshots chargés ici
+}
