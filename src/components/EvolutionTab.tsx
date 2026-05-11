@@ -121,15 +121,42 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
   // ── Données Filtrées/Sélectionnées ──────────────────────────────────────────
   
+  // Calcul enrichi des snapshots pour éviter les calculs dans le render
+  const enrichedSnaps = useMemo(() => {
+    return snapshots.map(s => {
+      const snapDates = s.days.map(d => d.date);
+      const minD = snapDates[0] || '';
+      const maxD = snapDates[snapDates.length - 1] || '';
+      const coversRange = minD <= dateFrom && maxD >= dateTo;
+      const overlapsAny = snapDates.some(d => d >= dateFrom && d <= dateTo);
+      
+      const hasRooms = s.days.some(d => 
+        d.rooms && Object.keys(d.rooms).length > 0 &&
+        Object.values(d.rooms).some(r => r.occupied > 0 || r.libres > 0)
+      );
+
+      return {
+        ...s,
+        minD,
+        maxD,
+        coversRange,
+        overlapsAny,
+        hasRooms,
+        isSelected: selectedIds.has(s.id),
+        label: snapLabel(s)
+      };
+    });
+  }, [snapshots, selectedIds, dateFrom, dateTo]);
+
   const selectedSnaps = useMemo(() => 
-    snapshots.filter(s => selectedIds.has(s.id)),
-    [snapshots, selectedIds]
+    enrichedSnaps.filter(s => s.isSelected),
+    [enrichedSnaps]
   );
 
   // 1. Évolution du taux moyen par snapshot (barre)
   const avgRateChart = useMemo(() =>
     selectedSnaps.map((s, i) => ({
-      name: snapLabel(s),
+      name: s.label,
       taux: Math.round(s.avgRate * 10) / 10,
       occupees: s.totalOcc,
       libres: s.totalLibres,
@@ -141,14 +168,18 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
   // 2. Évolution jour par jour sur la plage — une courbe par snapshot
   const dailyChart = useMemo(() => {
-    if (snapshots.length === 0) return [];
-    // Construire la liste de toutes les dates dans la plage
+    if (selectedSnaps.length === 0) return [];
+    
+    // Construire la liste de toutes les dates dans la plage de manière optimisée
     const datesSet = new Set<string>();
-    selectedSnaps.forEach(s => (s.days as DayAvailability[]).forEach(d => datesSet.add(d.date)));
-    const allDates: string[] = Array.from(datesSet).sort();
+    selectedSnaps.forEach(s => s.days.forEach(d => datesSet.add(d.date)));
+    const allDates = Array.from(datesSet).sort();
 
     return allDates.map(date => {
-      const point: Record<string, number | string | null> = { date: fmtDate(date), dateISO: date };
+      const point: Record<string, number | string | null> = { 
+        date: fmtDate(date), 
+        dateISO: date 
+      };
       selectedSnaps.forEach((s, i) => {
         const day = s.days.find(d => d.date === date);
         point[`snap_${i}`] = day != null ? Math.round(day.taux * 10) / 10 : null;
@@ -160,63 +191,51 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   // 3. Variation jour par jour entre les deux snapshots de comparaison
   const deltaChart = useMemo(() => {
     if (!comparisonIds) return [];
-    const first = snapshots.find(s => s.id === comparisonIds[0]);
-    const last = snapshots.find(s => s.id === comparisonIds[1]);
+    const first = enrichedSnaps.find(s => s.id === comparisonIds[0]);
+    const last = enrichedSnaps.find(s => s.id === comparisonIds[1]);
     if (!first || !last || first.id === last.id) return [];
 
-    const firstDates = new Set<string>(first.days.map(d => d.date));
-    const lastDates = new Set<string>(last.days.map(d => d.date));
-    const commonDates = Array.from(firstDates).filter(d => lastDates.has(d)).sort();
+    const firstDaysMap = new Map(first.days.map(d => [d.date, d]));
+    const lastDaysMap = new Map(last.days.map(d => [d.date, d]));
+    
+    const commonDates = Array.from(firstDaysMap.keys())
+      .filter(d => lastDaysMap.has(d))
+      .sort();
 
-    if (commonDates.length === 0) return [];
-    const dates = commonDates;
-
-    return dates.map(date => {
-      const d1 = first.days.find(d => d.date === date);
-      const d2 = last.days.find(d => d.date === date);
-      if (!d1 || !d2) return null;
+    return commonDates.map(date => {
+      const d1 = firstDaysMap.get(date)!;
+      const d2 = lastDaysMap.get(date)!;
       const delta = d2.taux - d1.taux;
-      const deltaOcc = d2.occupied_total - d1.occupied_total;
       return {
         date: fmtDate(date),
         dateISO: date,
         delta: Math.round(delta * 10) / 10,
-        deltaOcc,
+        deltaOcc: d2.occupied_total - d1.occupied_total,
         isPositive: delta >= 0,
       };
-    }).filter(Boolean) as {
-      date: string; dateISO: string; delta: number; deltaOcc: number; isPositive: boolean
-    }[];
-  }, [snapshots, comparisonIds]);
-
-  // Détecte si un snapshot a des données de rooms valides pour au moins un type
-  const hasRoomsData = useCallback((s: SnapshotWithDays) =>
-    (s.days as DayAvailability[]).some(d =>
-      d.rooms && Object.keys(d.rooms).length > 0 &&
-      Object.values(d.rooms).some(r => r.occupied > 0 || r.libres > 0)
-    ),
-  []);
+    });
+  }, [enrichedSnaps, comparisonIds]);
 
   // 4. Évolution par type de chambre (tableau)
   const typeEvolution = useMemo(() => {
     if (selectedSnaps.length === 0 || !hotel) return [];
     return hotel.types.map(type => {
       const bySnap = selectedSnaps.map(s => {
-        const days = s.days as DayAvailability[];
+        const days = s.days;
         const hasRooms = days.some(d => d.rooms[type.code] != null);
         const totalOcc = days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
         const totalCap = type.capacity * days.length;
         const rate = (hasRooms && totalCap > 0) ? (totalOcc / totalCap) * 100 : null;
         return {
-          snapshotLabel: snapLabel(s),
+          snapshotLabel: s.label,
           rate: rate != null ? Math.round(rate * 10) / 10 : null,
           incomplete: !hasRooms || totalOcc === 0, 
         };
       });
+
       const validForTrend = bySnap.filter(b => b.rate !== null && !b.incomplete);
       if (validForTrend.length === 0) return null;
 
-      // Tendance calculée entre les deux snapshots de comparaison si sélectionnés
       let diff = 0;
       if (comparisonIds) {
         const firstIdx = selectedSnaps.findIndex(s => s.id === comparisonIds[0]);
@@ -246,17 +265,16 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }[];
   }, [selectedSnaps, hotel.types, comparisonIds]);
 
-  // 5. KPIs — utilise les snapshots de comparaison sélectionnés
+  // 5. KPIs
   const kpis = useMemo(() => {
     if (!comparisonIds) return null;
-    const first = snapshots.find(s => s.id === comparisonIds[0]);
-    const last = snapshots.find(s => s.id === comparisonIds[1]);
+    const first = enrichedSnaps.find(s => s.id === comparisonIds[0]);
+    const last = enrichedSnaps.find(s => s.id === comparisonIds[1]);
     if (!first || !last) return null;
 
-    // Calcul du volume par type
     const occDiffByType = hotel.types.map(type => {
-      const d1 = (first.days as DayAvailability[]).reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
-      const d2 = (last.days as DayAvailability[]).reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const d1 = first.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const d2 = last.days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
       return {
         label: type.label,
         code: type.code,
@@ -274,8 +292,8 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       lastRate: last.avgRate,
       firstOcc: first.totalOcc,
       lastOcc: last.totalOcc,
-      firstLabel: snapLabel(first),
-      lastLabel: snapLabel(last),
+      firstLabel: first.label,
+      lastLabel: last.label,
       occDiffByType,
       snapshotsCount: selectedSnaps.length,
       daysCount: first.days.length,
@@ -402,31 +420,23 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {snapshots.map((s, idx) => {
-                const isSelected = selectedIds.has(s.id);
+              {enrichedSnaps.map((s, idx) => {
                 const isRef1 = comparisonIds?.[0] === s.id;
                 const isRef2 = comparisonIds?.[1] === s.id;
                 const isRef = isRef1 || isRef2;
-
-                // Validation des dates
-                const snapDates = s.days.map(d => d.date);
-                const minD = snapDates[0];
-                const maxD = snapDates[snapDates.length - 1];
-                const coversRange = minD <= dateFrom && maxD >= dateTo;
-                const overlapsAny = snapDates.some(d => d >= dateFrom && d <= dateTo);
 
                 return (
                   <div 
                     key={s.id}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all select-none",
-                      isSelected ? "bg-surf2 border-gold/30" : "bg-surf1 border-border opacity-50 grayscale",
+                      s.isSelected ? "bg-surf2 border-gold/30" : "bg-surf1 border-border opacity-50 grayscale",
                       isRef && "ring-1 ring-gold"
                     )}
                   >
                     <input 
                       type="checkbox"
-                      checked={isSelected}
+                      checked={s.isSelected}
                       onChange={() => {
                         const next = new Set(selectedIds);
                         if (next.has(s.id)) next.delete(s.id); else next.add(s.id);
@@ -451,11 +461,11 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold whitespace-nowrap">{snapLabel(s)}</span>
-                        {!coversRange && overlapsAny && (
+                        <span className="text-[11px] font-bold whitespace-nowrap">{s.label}</span>
+                        {!s.coversRange && s.overlapsAny && (
                           <AlertTriangle size={12} className="text-amber" title="Couverture partielle des dates sélectionnées" />
                         )}
-                        {!overlapsAny && (
+                        {!s.overlapsAny && (
                           <AlertTriangle size={12} className="text-red" title="Aucune date commune avec la plage sélectionnée" />
                         )}
                       </div>
@@ -723,7 +733,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                 <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest">
                   Évolution par type de chambre
                 </h3>
-                {snapshots.some(s => !hasRoomsData(s)) && (
+                {enrichedSnaps.some(s => !s.hasRooms) && (
                   <div className="flex items-center gap-1.5 text-[10px] text-amber shrink-0">
                     <AlertTriangle size={11} />
                     Les colonnes marquées <strong>⚠</strong> n'ont pas de données par type — snapshot incomplet.
@@ -734,14 +744,14 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                 <thead>
                   <tr className="border-b border-border text-text-dark">
                     <th className="text-left p-3 font-bold uppercase text-[10px]">Type</th>
-                    {snapshots.map((s, i) => {
-                      const incomplete = !hasRoomsData(s);
+                    {enrichedSnaps.map((s, i) => {
+                      const incomplete = !s.hasRooms;
                       return (
                         <th key={s.id} className={cn("p-3 text-center font-bold text-[10px]", incomplete && "opacity-50 group/snap relative")}>
                           <div className="flex flex-col items-center justify-center gap-0.5">
                             <div className="flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                              <span className="truncate max-w-[100px]">{snapLabel(s)}</span>
+                              <span className="truncate max-w-[100px]">{s.label}</span>
                               {incomplete && <span className="text-amber" title="Snapshot sans données de rooms">⚠</span>}
                             </div>
                             <span className="text-[8px] text-text-dark font-normal opacity-70">
