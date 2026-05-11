@@ -61,6 +61,10 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  // Nouveaux états pour la sélection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [comparisonIds, setComparisonIds] = useState<[string, string] | null>(null);
+
   const canLoad = auth.user && hotel?.supabaseRegistered;
 
   // ── Chargement ──────────────────────────────────────────────────────────────
@@ -88,6 +92,17 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
       setSnapshots(result);
       setLoaded(true);
+
+      // Par défaut, on sélectionne tout
+      setSelectedIds(new Set(result.map(s => s.id)));
+      
+      // Références de comparaison : les deux plus récents
+      if (result.length >= 2) {
+        setComparisonIds([result[result.length - 2].id, result[result.length - 1].id]);
+      } else {
+        setComparisonIds(null);
+      }
+
       if (result.length === 0) onShowToast('Aucun snapshot trouvé pour cette plage', 'error');
     } catch (e) {
       onShowToast(e instanceof Error ? e.message : 'Erreur chargement', 'error');
@@ -104,11 +119,16 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }
   }, [hotel?.id]);
 
-  // ── Données pour les graphiques ──────────────────────────────────────────────
+  // ── Données Filtrées/Sélectionnées ──────────────────────────────────────────
+  
+  const selectedSnaps = useMemo(() => 
+    snapshots.filter(s => selectedIds.has(s.id)),
+    [snapshots, selectedIds]
+  );
 
   // 1. Évolution du taux moyen par snapshot (barre)
   const avgRateChart = useMemo(() =>
-    snapshots.map((s, i) => ({
+    selectedSnaps.map((s, i) => ({
       name: snapLabel(s),
       taux: Math.round(s.avgRate * 10) / 10,
       occupees: s.totalOcc,
@@ -116,7 +136,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       color: COLORS[i % COLORS.length],
       snapshotId: s.id,
     })),
-    [snapshots]
+    [selectedSnaps]
   );
 
   // 2. Évolution jour par jour sur la plage — une courbe par snapshot
@@ -124,30 +144,26 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     if (snapshots.length === 0) return [];
     // Construire la liste de toutes les dates dans la plage
     const datesSet = new Set<string>();
-    snapshots.forEach(s => (s.days as DayAvailability[]).forEach(d => datesSet.add(d.date)));
+    selectedSnaps.forEach(s => (s.days as DayAvailability[]).forEach(d => datesSet.add(d.date)));
     const allDates: string[] = Array.from(datesSet).sort();
 
     return allDates.map(date => {
       const point: Record<string, number | string | null> = { date: fmtDate(date), dateISO: date };
-      snapshots.forEach((s, i) => {
+      selectedSnaps.forEach((s, i) => {
         const day = s.days.find(d => d.date === date);
         point[`snap_${i}`] = day != null ? Math.round(day.taux * 10) / 10 : null;
       });
       return point;
     });
-  }, [snapshots]);
+  }, [selectedSnaps]);
 
-  // 3. Variation jour par jour entre le premier et le dernier snapshot
+  // 3. Variation jour par jour entre les deux snapshots de comparaison
   const deltaChart = useMemo(() => {
-    if (snapshots.length < 2) return [];
-    // Utilise les snapshots avec des données d'occupation réelles (capacite > 0)
-    const validSnaps = snapshots.filter(s =>
-      (s.days as DayAvailability[]).some(d => d.capacite > 0 && d.libres_total < d.capacite)
-    );
-    const list = validSnaps.length >= 2 ? validSnaps : snapshots;
-    const first = list[0];
-    const last = list[list.length - 1];
-    if (first.id === last.id) return [];
+    if (!comparisonIds) return [];
+    const first = snapshots.find(s => s.id === comparisonIds[0]);
+    const last = snapshots.find(s => s.id === comparisonIds[1]);
+    if (!first || !last || first.id === last.id) return [];
+
     const firstDates = new Set<string>(first.days.map(d => d.date));
     const lastDates = new Set<string>(last.days.map(d => d.date));
     const commonDates = Array.from(firstDates).filter(d => lastDates.has(d)).sort();
@@ -171,7 +187,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
     }).filter(Boolean) as {
       date: string; dateISO: string; delta: number; deltaOcc: number; isPositive: boolean
     }[];
-  }, [snapshots]);
+  }, [snapshots, comparisonIds]);
 
   // Détecte si un snapshot a des données de rooms valides pour au moins un type
   const hasRoomsData = useCallback((s: SnapshotWithDays) =>
@@ -183,9 +199,9 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
 
   // 4. Évolution par type de chambre (tableau)
   const typeEvolution = useMemo(() => {
-    if (snapshots.length === 0 || !hotel) return [];
+    if (selectedSnaps.length === 0 || !hotel) return [];
     return hotel.types.map(type => {
-      const bySnap = snapshots.map(s => {
+      const bySnap = selectedSnaps.map(s => {
         const days = s.days as DayAvailability[];
         const hasRooms = days.some(d => d.rooms[type.code] != null);
         const totalOcc = days.reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
@@ -194,20 +210,33 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
         return {
           snapshotLabel: snapLabel(s),
           rate: rate != null ? Math.round(rate * 10) / 10 : null,
-          incomplete: !hasRooms || totalOcc === 0, // Considérer incomplet si 0 occupation totale (évite le décalage)
+          incomplete: !hasRooms || totalOcc === 0, 
         };
       });
       const validForTrend = bySnap.filter(b => b.rate !== null && !b.incomplete);
       if (validForTrend.length === 0) return null;
 
-      // Tendance : premier snapshot complet → dernier snapshot complet
-      const firstValid = validForTrend[0].rate!;
-      const lastValid = validForTrend[validForTrend.length - 1].rate!;
+      // Tendance calculée entre les deux snapshots de comparaison si sélectionnés
+      let diff = 0;
+      if (comparisonIds) {
+        const firstIdx = selectedSnaps.findIndex(s => s.id === comparisonIds[0]);
+        const lastIdx = selectedSnaps.findIndex(s => s.id === comparisonIds[1]);
+        if (firstIdx !== -1 && lastIdx !== -1) {
+          const r1 = bySnap[firstIdx].rate;
+          const r2 = bySnap[lastIdx].rate;
+          if (r1 !== null && r2 !== null) diff = r2 - r1;
+        }
+      } else {
+        const firstValid = validForTrend[0].rate!;
+        const lastValid = validForTrend[validForTrend.length - 1].rate!;
+        diff = lastValid - firstValid;
+      }
+
       return {
         type: type.label,
         code: type.code,
         bySnap,
-        diff: lastValid - firstValid, // Récent - Ancien (sur base complète)
+        diff,
       };
     }).filter(Boolean) as {
       type: string;
@@ -215,20 +244,30 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       bySnap: { snapshotLabel: string; rate: number | null; incomplete: boolean }[];
       diff: number;
     }[];
-  }, [snapshots, hotel.types]);
+  }, [selectedSnaps, hotel.types, comparisonIds]);
 
-  // 5. KPIs — utilise les snapshots avec données valides (taux > 0 ou libres < capacite)
+  // 5. KPIs — utilise les snapshots de comparaison sélectionnés
   const kpis = useMemo(() => {
-    if (snapshots.length < 2) return null;
-    const valid = snapshots.filter(s =>
-      (s.days as DayAvailability[]).some(d => d.capacite > 0 && d.libres_total < d.capacite)
-    );
-    // Fallback sur toute la liste si aucun valide détecté
-    const list = valid.length >= 2 ? valid : snapshots;
-    const first = list[0];
-    const last = list[list.length - 1];
+    if (!comparisonIds) return null;
+    const first = snapshots.find(s => s.id === comparisonIds[0]);
+    const last = snapshots.find(s => s.id === comparisonIds[1]);
+    if (!first || !last) return null;
+
+    // Calcul du volume par type
+    const occDiffByType = hotel.types.map(type => {
+      const d1 = (first.days as DayAvailability[]).reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      const d2 = (last.days as DayAvailability[]).reduce((sum, d) => sum + (d.rooms[type.code]?.occupied ?? 0), 0);
+      return {
+        label: type.label,
+        code: type.code,
+        diff: d2 - d1,
+        v1: d1,
+        v2: d2
+      };
+    }).filter(d => d.v1 > 0 || d.v2 > 0);
+
     return {
-      rateDiff: last.avgRate - first.avgRate, // Récent - Ancien
+      rateDiff: last.avgRate - first.avgRate,
       occDiff: last.totalOcc - first.totalOcc,
       libresDiff: last.totalLibres - first.totalLibres,
       firstRate: first.avgRate,
@@ -237,11 +276,11 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
       lastOcc: last.totalOcc,
       firstLabel: snapLabel(first),
       lastLabel: snapLabel(last),
-      snapshotsCount: snapshots.length,
-      validCount: list.length,
+      occDiffByType,
+      snapshotsCount: selectedSnaps.length,
       daysCount: first.days.length,
     };
-  }, [snapshots]);
+  }, [snapshots, comparisonIds, hotel.types, selectedSnaps.length]);
 
   const handlePrint = () => {
     window.print();
@@ -350,6 +389,113 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
             </button>
           </div>
         )}
+
+        {/* Liste des snapshots chargés — pour sélection et comparaison */}
+        {loaded && snapshots.length > 0 && (
+          <div className="pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest flex items-center gap-2">
+                <Database size={12} className="text-gold" /> Rapports disponibles pour comparaison
+              </h3>
+              <div className="text-[9px] text-text-dim italic">
+                Cochez pour inclure dans les graphiques · Sélectionnez les deux points (◯) pour calculer l'évolution
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {snapshots.map((s, idx) => {
+                const isSelected = selectedIds.has(s.id);
+                const isRef1 = comparisonIds?.[0] === s.id;
+                const isRef2 = comparisonIds?.[1] === s.id;
+                const isRef = isRef1 || isRef2;
+
+                // Validation des dates
+                const snapDates = s.days.map(d => d.date);
+                const minD = snapDates[0];
+                const maxD = snapDates[snapDates.length - 1];
+                const coversRange = minD <= dateFrom && maxD >= dateTo;
+                const overlapsAny = snapDates.some(d => d >= dateFrom && d <= dateTo);
+
+                return (
+                  <div 
+                    key={s.id}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all select-none",
+                      isSelected ? "bg-surf2 border-gold/30" : "bg-surf1 border-border opacity-50 grayscale",
+                      isRef && "ring-1 ring-gold"
+                    )}
+                  >
+                    <input 
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        const next = new Set(selectedIds);
+                        if (next.has(s.id)) next.delete(s.id); else next.add(s.id);
+                        setSelectedIds(next);
+                      }}
+                      className="accent-gold cursor-pointer"
+                    />
+                    
+                    <div 
+                      className="cursor-pointer flex-1"
+                      onClick={() => {
+                        // Toggle comparison ref
+                        if (isRef1) {
+                          if (comparisonIds) setComparisonIds([comparisonIds[1], s.id]); // Swap?
+                        } else if (isRef2) {
+                          // Already there
+                        } else {
+                          // Add as new last ref
+                          if (comparisonIds) setComparisonIds([comparisonIds[1], s.id]);
+                          else setComparisonIds([s.id, s.id]); // Should not happen
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold whitespace-nowrap">{snapLabel(s)}</span>
+                        {!coversRange && overlapsAny && (
+                          <AlertTriangle size={12} className="text-amber" title="Couverture partielle des dates sélectionnées" />
+                        )}
+                        {!overlapsAny && (
+                          <AlertTriangle size={12} className="text-red" title="Aucune date commune avec la plage sélectionnée" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-border/50">
+                      <button
+                        title="Référence A (Ancien)"
+                        onClick={() => setComparisonIds([s.id, comparisonIds?.[1] || s.id])}
+                        className={cn(
+                          "w-4 h-4 rounded-full border flex items-center justify-center text-[8px] font-bold transition-all",
+                          isRef1 ? "bg-gold border-gold text-bg" : "border-border text-text-dim hover:border-gold"
+                        )}
+                      >
+                        A
+                      </button>
+                      <button
+                        title="Référence B (Récent)"
+                        onClick={() => setComparisonIds([comparisonIds?.[0] || s.id, s.id])}
+                        className={cn(
+                          "w-4 h-4 rounded-full border flex items-center justify-center text-[8px] font-bold transition-all",
+                          isRef2 ? "bg-gold border-gold text-bg" : "border-border text-text-dim hover:border-gold"
+                        )}
+                      >
+                        B
+                      </button>
+                    </div>
+
+                    <button 
+                      onClick={() => handleDeleteSnapshot(s.id)}
+                      className="p-1 text-text-dark hover:text-red transition-colors ml-1"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* État vide */}
@@ -390,8 +536,8 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
             </div>
           )}
 
-          {/* KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {/* 1. Variation Taux */}
             <div className="p-5 bg-surf1 border border-border rounded-2xl">
               <div className="flex items-center gap-2 mb-3">
                 {kpis.rateDiff > 0
@@ -399,7 +545,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                   : kpis.rateDiff < 0
                     ? <ArrowDownRight size={18} className="text-red" />
                     : <Minus size={18} className="text-text-dark" />}
-                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Variation taux</span>
+                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Variation Taux</span>
               </div>
               <div className={cn("text-3xl font-serif font-bold",
                 kpis.rateDiff > 0 ? "text-green" : kpis.rateDiff < 0 ? "text-red" : "text-text-dim")}>
@@ -410,29 +556,57 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
               </div>
             </div>
 
+            {/* 2. Variation Volume */}
             <div className="p-5 bg-surf1 border border-border rounded-2xl">
               <div className="flex items-center gap-2 mb-3">
                 {kpis.occDiff > 0
                   ? <TrendingUp size={18} className="text-green" />
-                  : <TrendingDown size={18} className="text-red" />}
-                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Nuitées vendues</span>
+                  : kpis.occDiff < 0
+                    ? <TrendingDown size={18} className="text-red" />
+                    : <Minus size={18} className="text-text-dark" />}
+                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Variation Volume</span>
               </div>
-              <div className={cn("text-3xl font-serif font-bold", kpis.occDiff >= 0 ? "text-green" : "text-red")}>
+              <div className={cn("text-3xl font-serif font-bold",
+                kpis.occDiff > 0 ? "text-green" : kpis.occDiff < 0 ? "text-red" : "text-text-dim")}>
                 {kpis.occDiff > 0 ? '+' : ''}{kpis.occDiff.toLocaleString('fr')}
               </div>
-              <div className="text-[10px] text-text-dark mt-1">
+              <div className="text-[10px] text-text-dark mt-1 truncate">
                 {kpis.firstOcc.toLocaleString('fr')} → {kpis.lastOcc.toLocaleString('fr')}
               </div>
             </div>
 
+            {/* 3. Détail par Type */}
             <div className="p-5 bg-surf1 border border-border rounded-2xl">
               <div className="flex items-center gap-2 mb-3">
-                <BarChart3 size={18} className="text-blue" />
-                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Snapshots</span>
+                <Users size={18} className="text-gold" />
+                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Détail par Type</span>
               </div>
-              <div className="text-3xl font-serif font-bold text-blue">{kpis.snapshotsCount}</div>
-              <div className="text-[10px] text-text-dark mt-1 truncate">
-                {kpis.firstLabel} → {kpis.lastLabel}
+              <div className="space-y-1.5 max-h-[60px] overflow-y-auto pr-2 custom-scrollbar">
+                {kpis.occDiffByType.map(t => (
+                  <div key={t.code} className="flex items-center justify-between text-[11px]">
+                    <span className="text-text-dim truncate mr-2" title={t.label}>{t.label}</span>
+                    <span className={cn("font-bold shrink-0", t.diff > 0 ? "text-green" : t.diff < 0 ? "text-red" : "text-text-dim")}>
+                      {t.diff > 0 ? '+' : ''}{t.diff}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Infos Comparaison */}
+            <div className="p-5 bg-surf1 border border-border rounded-2xl">
+              <div className="flex items-center gap-2 mb-3">
+                <RefreshCw size={18} className="text-blue" />
+                <span className="text-[10px] font-bold text-text-dark uppercase tracking-widest">Comparaison</span>
+              </div>
+              <div className="text-xl font-bold text-text truncate mb-1">
+                {kpis.lastLabel}
+              </div>
+              <div className="text-[10px] text-text-dark truncate">
+                vs {kpis.firstLabel}
+              </div>
+              <div className="mt-2 text-[10px] bg-blue/10 text-blue px-2 py-0.5 rounded-full inline-block">
+                {kpis.snapshotsCount} snapshots analysés
               </div>
             </div>
           </div>
