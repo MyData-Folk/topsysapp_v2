@@ -183,47 +183,61 @@ function aggregateSnap(snap: SnapshotMeta, days: DayAvailability[]): SnapshotWit
  */
 export async function fetchSnapshotsForEvolution(
   hotelId: string,
-  dateFrom: string,   // 'YYYY-MM-DD'
-  dateTo: string,     // 'YYYY-MM-DD'
+  dateFrom: string,
+  dateTo: string,
 ): Promise<SnapshotWithDays[]> {
   const client = requireClient()
 
-  // 1. Tous les snapshots de l'hôtel qui couvrent la plage
-  const { data: snaps, error: snapErr } = await client
-    .from('availability_snapshots')
-    .select('id, hotel_id, import_date, edition_date, period_str, filename, days_count, created_by')
-    .eq('hotel_id', hotelId)
-    .order('edition_date', { ascending: true })
-    .order('import_date', { ascending: true })
+  const fetchPromise = (async () => {
+    // 1. Tous les snapshots de l'hôtel qui couvrent la plage
+    const { data: snaps, error: snapErr } = await client
+      .from('availability_snapshots')
+      .select('id, hotel_id, import_date, edition_date, period_str, filename, days_count, created_by')
+      .eq('hotel_id', hotelId)
+      .order('edition_date', { ascending: true })
+      .order('import_date', { ascending: true })
 
-  if (snapErr) throw new Error(`Erreur chargement snapshots : ${snapErr.message}`)
-  if (!snaps || snaps.length === 0) return []
+    if (snapErr) throw new Error(`Erreur chargement snapshots : ${snapErr.message}`)
+    if (!snaps || snaps.length === 0) return []
 
-  const snapIds = snaps.map(s => s.id)
+    const snapIds = snaps.map(s => s.id)
 
-  // 2. Toutes les lignes de disponibilités pour ces snapshots sur la plage
-  const { data: rows, error: rowErr } = await client
-    .from('availabilities')
-    .select('snapshot_id, date, libres_total, capacite, prix, rooms')
-    .in('snapshot_id', snapIds)
-    .gte('date', dateFrom)
-    .lte('date', dateTo)
-    .order('date', { ascending: true })
+    // 2. Toutes les lignes de disponibilités pour ces snapshots sur la plage
+    const { data: rows, error: rowErr } = await client
+      .from('availabilities')
+      .select('snapshot_id, date, libres_total, capacite, prix, rooms')
+      .in('snapshot_id', snapIds)
+      .gte('date', dateFrom)
+      .lte('date', dateTo)
+      .order('date', { ascending: true })
 
-  if (rowErr) throw new Error(`Erreur chargement disponibilités : ${rowErr.message}`)
+    if (rowErr) throw new Error(`Erreur chargement disponibilités : ${rowErr.message}`)
+    return { snaps, rows };
+  })();
 
-  // 3. Grouper les lignes par snapshot_id
-  const bySnap = new Map<string, DayAvailability[]>()
-  for (const row of rows ?? []) {
-    const day = enrichDay(row as any)
-    if (!bySnap.has(row.snapshot_id)) bySnap.set(row.snapshot_id, [])
-    bySnap.get(row.snapshot_id)!.push(day)
+  const timeoutPromise = new Promise<{snaps: any[], rows: any[]}>((_, reject) => 
+    setTimeout(() => reject(new Error('TIMEOUT_EVOLUTION')), 30000)
+  );
+
+  try {
+    const { snaps, rows } = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    // 3. Grouper les lignes par snapshot_id
+    const bySnap = new Map<string, DayAvailability[]>()
+    for (const row of rows ?? []) {
+      const day = enrichDay(row as any)
+      if (!bySnap.has(row.snapshot_id)) bySnap.set(row.snapshot_id, [])
+      bySnap.get(row.snapshot_id)!.push(day)
+    }
+
+    // 4. Ne garder que les snapshots qui ont des données sur la plage
+    return snaps
+      .filter(s => (bySnap.get(s.id)?.length ?? 0) > 0)
+      .map(s => aggregateSnap(s as SnapshotMeta, bySnap.get(s.id) ?? []))
+  } catch (err: any) {
+    if (err.message === 'TIMEOUT_EVOLUTION') throw new Error('Le serveur Cloud est trop lent à répondre (Evolution)')
+    throw err;
   }
-
-  // 4. Ne garder que les snapshots qui ont des données sur la plage
-  return snaps
-    .filter(s => (bySnap.get(s.id)?.length ?? 0) > 0)
-    .map(s => aggregateSnap(s as SnapshotMeta, bySnap.get(s.id) ?? []))
 }
 
 /**
