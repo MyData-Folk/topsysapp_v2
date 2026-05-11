@@ -34,7 +34,7 @@ export function Charts({ report, config, hotel, visibleCols }: ChartsProps) {
           <TrendingUp size={12} className="text-gold" /> Taux d'occupation (%)
         </h3>
         <div className="h-[230px] min-w-[420px] md:h-[250px] md:min-w-0 md:w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart data={occData}>
               <defs>
                 <linearGradient id="colorOcc" x1="0" y1="0" x2="0" y2="1">
@@ -57,7 +57,7 @@ export function Charts({ report, config, hotel, visibleCols }: ChartsProps) {
           <BarChart3 size={12} className="text-blue" /> CA journalier ({config.currency})
         </h3>
         <div className="h-[230px] min-w-[420px] md:h-[250px] md:min-w-0 md:w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <LineChart data={caData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
               <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'var(--theme-text-dark)', fontSize: 10 }} interval="preserveStartEnd" />

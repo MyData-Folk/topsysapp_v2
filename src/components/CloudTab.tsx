@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Cloud, Upload, Download, Trash2, LogOut, User, AlertCircle, RefreshCw } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { OccupancyData } from '../types'
+import { AppConfig, HotelConfig, OccupancyData } from '../types'
 import { AuthState } from '../hooks/useAuth'
 import { AuthModal } from './AuthModal'
 import {
@@ -14,17 +14,27 @@ import {
 
 interface CloudTabProps {
   auth: AuthState
+  hotel: HotelConfig | null
   activeReport: OccupancyData | null
   onAddReport: (r: OccupancyData) => boolean
   onShowToast: (msg: string, type?: 'ok' | 'error') => void
 }
 
-export function CloudTab({ auth, activeReport, onAddReport, onShowToast }: CloudTabProps) {
+export function CloudTab({ auth, hotel, activeReport, onAddReport, onShowToast }: CloudTabProps) {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [cloudReports, setCloudReports] = useState<CloudReportMeta[]>([])
   const [loadingList, setLoadingList] = useState(false)
   const [listError, setListError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  // Filtrage local basé sur l'hôtel sélectionné
+  const filteredReports = useMemo(() => {
+    if (!hotel) return cloudReports; // Mode Global : tout afficher
+    return cloudReports.filter(r => 
+      r.establishment_name?.toLowerCase().includes(hotel.name.toLowerCase()) ||
+      hotel.name.toLowerCase().includes(r.establishment_name?.toLowerCase() || '')
+    );
+  }, [cloudReports, hotel]);
 
   const fetchList = useCallback(async () => {
     setLoadingList(true)
@@ -175,7 +185,7 @@ export function CloudTab({ auth, activeReport, onAddReport, onShowToast }: Cloud
           <div className="bg-surf1 border border-border rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-bold text-text-dark uppercase tracking-widest">
-                Rapports sauvegardés ({cloudReports.length})
+                Rapports sauvegardés ({filteredReports.length})
               </h3>
               <button
                 onClick={fetchList}
@@ -197,11 +207,11 @@ export function CloudTab({ auth, activeReport, onAddReport, onShowToast }: Cloud
               <div className="flex justify-center py-8">
                 <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : cloudReports.length === 0 ? (
+            ) : filteredReports.length === 0 ? (
               <p className="text-sm text-text-dim text-center py-8">Aucun rapport sauvegardé.</p>
             ) : (
               <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
-                {cloudReports.map(r => (
+                {filteredReports.map(r => (
                   <div key={r.id} className="group flex items-center justify-between p-3 bg-surf2 border border-transparent hover:border-border-hover rounded-xl transition-all">
                     <div className="flex-1 min-w-0 pr-3">
                       <p className="text-sm font-bold text-text truncate">{r.filename}</p>

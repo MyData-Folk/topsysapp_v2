@@ -312,8 +312,11 @@ export function ImportTab({
               {cloudReports
                 .filter(r => {
                   if (showAllCloud) return true;
-                  // Filtrage par hôtel sélectionné
-                  const hotelMatches = !activeHotel || activeHotel.id === 'default' || r.establishment_name === activeHotel.name;
+                  // Filtrage par hôtel sélectionné (recherche floue par nom)
+                  const hotelMatches = !activeHotel || (
+                    r.establishment_name?.toLowerCase().includes(activeHotel.name.toLowerCase()) ||
+                    activeHotel.name.toLowerCase().includes(r.establishment_name?.toLowerCase() || '')
+                  );
                   // Filtrage par rapports déjà importés
                   const isImported = reports.some(lr => lr.periodStr === r.period_str && lr.establishmentName === r.establishment_name);
                   return hotelMatches && !isImported;
