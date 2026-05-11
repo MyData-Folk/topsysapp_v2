@@ -74,7 +74,7 @@ export function ImportTab({
   const [previewReport, setPreviewReport] = useState<CloudReportMeta | null>(null)
   const [importingId, setImportingId] = useState<string | null>(null)
   const [showAllCloud, setShowAllCloud] = useState(false)
-  const [cloudSearch, setCloudSearch] = useState('')
+  const [cloudHotelFilter, setCloudHotelFilter] = useState<string>('auto')
 
   // Stable refs so handleFile never needs to be recreated when config/hotel change
   const configRef = React.useRef(config)
@@ -319,23 +319,18 @@ export function ImportTab({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative group">
-                <input 
-                  type="text"
-                  placeholder="Filtrer..."
-                  value={cloudSearch}
-                  onChange={e => setCloudSearch(e.target.value)}
-                  className="w-24 md:w-32 py-1 px-2 text-[10px] bg-surf2 border border-border rounded-md focus:outline-none focus:border-gold/50 transition-all text-text"
-                />
-                {cloudSearch && (
-                  <button 
-                    onClick={() => setCloudSearch('')}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-dark hover:text-text"
-                  >
-                    <X size={10} />
-                  </button>
-                )}
-              </div>
+              <select
+                value={cloudHotelFilter}
+                onChange={e => setCloudHotelFilter(e.target.value)}
+                className="text-[10px] bg-surf2 border border-border rounded-md px-2 py-1 focus:outline-none focus:border-gold/50 text-text"
+              >
+                <option value="auto">{activeHotel ? `Filtrer : ${activeHotel.name}` : 'Sélectionner un hôtel'}</option>
+                <option value="all">Tous les hôtels</option>
+                <hr className="my-1 border-border/50" />
+                {config.hotels.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
               <button
                 onClick={fetchCloudReports}
                 disabled={loadingCloud}
@@ -362,13 +357,15 @@ export function ImportTab({
           ) : (() => {
             // Filtrage appliqué
             const filtered = cloudReports.filter(r => {
-              const nameMatch = showAllCloud || !activeHotel || hotelMatchesReport(activeHotel.name, r.establishment_name);
-              const searchMatch = !cloudSearch || 
-                r.establishment_name?.toLowerCase().includes(cloudSearch.toLowerCase()) ||
-                r.period_str?.toLowerCase().includes(cloudSearch.toLowerCase()) ||
-                r.filename?.toLowerCase().includes(cloudSearch.toLowerCase());
+              if (cloudHotelFilter === 'all') return true;
               
-              return nameMatch && searchMatch;
+              let targetHotel = activeHotel;
+              if (cloudHotelFilter !== 'auto') {
+                targetHotel = config.hotels.find(h => h.id === cloudHotelFilter) || null;
+              }
+              
+              if (!targetHotel) return true;
+              return hotelMatchesReport(targetHotel.name, r.establishment_name);
             });
 
             if (filtered.length === 0) {

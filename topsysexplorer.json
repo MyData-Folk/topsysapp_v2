@@ -1,0 +1,48 @@
+{
+  "project": "TopsysExplorer",
+  "version": "2.0.0",
+  "description": "Plateforme avancée d'analyse et de comparaison de rapports d'occupation hôtelière Topsys.",
+  "architecture": {
+    "frontend": "React + TypeScript + Vite",
+    "styling": "Vanilla CSS + Lucide Icons",
+    "state_management": "Custom React Hook Store (useAppStore)",
+    "storage": {
+      "config": "LocalStorage",
+      "reports": "IndexedDB (idb-keyval)",
+      "cloud": "Supabase (Auth + PostgreSQL)"
+    }
+  },
+  "modules": {
+    "parser": {
+      "path": "src/lib/pdfParser.ts",
+      "engine": "PDF.js",
+      "features": ["groupByLine", "extractData", "autoDetectCategories"]
+    },
+    "storage": {
+      "path": "src/lib/availabilitiesStorage.ts",
+      "features": ["pushAvailabilities", "fetchSnapshotsForEvolution", "deleteSnapshot"]
+    },
+    "components": {
+      "import": "ImportTab.tsx",
+      "analysis": "AnalyseTab.tsx",
+      "evolution": "EvolutionTab.tsx",
+      "filters": "FilterBar.tsx",
+      "wizard": "HotelWizard.tsx"
+    }
+  },
+  "data_model": {
+    "OccupancyData": {
+      "id": "UUID",
+      "establishmentName": "string",
+      "dateLabels": "Array<{full, short, date}>",
+      "occupied": "Record<Type, number[]>",
+      "libresTotal": "number[]",
+      "prices": "number[]"
+    }
+  },
+  "logic": {
+    "kpi_calculation": "Somme pondérée par capacité et date",
+    "evolution_logic": "Différence brute (T2 - T1) sur dates communes ou globales",
+    "auth": "Supabase Auth (Email/Password)"
+  }
+}

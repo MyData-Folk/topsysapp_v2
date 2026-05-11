@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw, Cloud } from 'lucide-react';
+import { Download, FileText, TrendingUp, Bed, CheckCircle2, Euro, Users, Calendar, AlertTriangle, DatabaseZap, History, RefreshCw, Cloud, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { OccupancyData, AppConfig, HotelConfig, FilterState } from '../types';
 import { useFilteredData } from '../hooks/useFilteredData';
@@ -200,6 +200,9 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
               <button onClick={exportJson} className="px-4 py-2 bg-surf2 border border-border text-text-dim text-xs font-bold rounded-xl hover:bg-surf3 transition-all flex items-center gap-2">
                 <FileText size={14} /> EXPORTER JSON
               </button>
+              <button onClick={() => window.print()} className="px-4 py-2 bg-gold/10 border border-gold/30 text-gold text-xs font-bold rounded-xl hover:bg-gold/20 transition-all flex items-center gap-2 ml-auto no-print">
+                <Printer size={14} /> IMPRIMER PDF
+              </button>
             </div>
 
             {/* Supabase publish - Uniquement si connecté */}
@@ -335,6 +338,28 @@ export function AnalyseTab({ report, config, hotel, filters, pdfFile, auth, onFi
         {/* PDF Viewer */}
         {viewingPdf && <PdfViewer file={pdfFile} fileName={report.fileName} onClose={() => setViewingPdf(false)} />}
       </div>
+      {/* Styles d'impression pour améliorer la qualité du PDF */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          @page { size: landscape; margin: 1cm; }
+          body { background: white !important; color: black !important; font-family: sans-serif; }
+          .no-print, nav, header, aside, button, .tabs-nav { display: none !important; }
+          .print-only { display: block !important; }
+          .bg-surf1, .bg-surf2, .bg-surf3 { background: white !important; border: 1px solid #ddd !important; }
+          .text-text, .text-text-dim { color: black !important; }
+          .text-text-dark { color: #555 !important; }
+          .border-border { border-color: #ccc !important; }
+          .rounded-2xl, .rounded-xl { border-radius: 4px !important; }
+          .shadow-sm, .shadow-xl { box-shadow: none !important; }
+          table { width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important; margin-bottom: 20px; }
+          th, td { border: 1px solid #ccc !important; padding: 6px 4px !important; text-align: center; }
+          th { background: #f9f9f9 !important; font-weight: bold; }
+          .chart-container { height: 250px !important; page-break-inside: avoid; border: 1px solid #eee; margin: 10px 0; }
+          h1, h2, h3 { color: black !important; margin: 15px 0 !important; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+          .kpi-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 15px !important; margin-bottom: 20px; }
+          .font-mono { font-family: monospace !important; }
+        }
+      `}} />
     </div>
   );
 }
