@@ -853,12 +853,16 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
                         </td>
                       ))}
                       <td className="p-3 text-center">
-                        <div className={cn(
-                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px]",
-                          te.diff > 0 ? "bg-green/10 text-green" : te.diff < 0 ? "bg-red/10 text-red" : "bg-surf2 text-text-dark"
-                        )}>
-                          {te.diff > 0 ? <ArrowUpRight size={10} /> : te.diff < 0 ? <ArrowDownRight size={10} /> : null}
-                          {te.diff > 0 ? '+' : ''}{viewMode === 'rate' ? `${te.diff.toFixed(1)}%` : te.diff}
+                        <div className="flex flex-col items-center">
+                          <div className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px]",
+                            te.diff > 0 ? "bg-green/10 text-green" : te.diff < 0 ? "bg-red/10 text-red" : "bg-surf2 text-text-dark"
+                          )}>
+                            {te.diff > 0 ? <ArrowUpRight size={10} /> : te.diff < 0 ? <ArrowDownRight size={10} /> : null}
+                            {te.diff > 0 ? '+' : ''}{viewMode === 'rate' ? `${te.diff.toFixed(1)}%` : te.diff}
+                          </div>
+                          {/* Indication pour expliquer l'écart avec les totaux si besoin */}
+                          <span className="text-[7px] text-text-dark opacity-50 whitespace-nowrap mt-0.5">dates communes</span>
                         </div>
                       </td>
                     </tr>

@@ -74,6 +74,7 @@ export function ImportTab({
   const [previewReport, setPreviewReport] = useState<CloudReportMeta | null>(null)
   const [importingId, setImportingId] = useState<string | null>(null)
   const [showAllCloud, setShowAllCloud] = useState(false)
+  const [cloudSearch, setCloudSearch] = useState('')
 
   // Stable refs so handleFile never needs to be recreated when config/hotel change
   const configRef = React.useRef(config)
@@ -317,14 +318,33 @@ export function ImportTab({
                 </span>
               </div>
             </div>
-            <button
-              onClick={fetchCloudReports}
-              disabled={loadingCloud}
-              className="p-1.5 text-text-dark hover:text-gold rounded-lg hover:bg-gold/10 transition-colors disabled:opacity-50"
-              title="Rafraîchir"
-            >
-              <RefreshCw size={13} className={loadingCloud ? 'animate-spin' : ''} />
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="relative group">
+                <input 
+                  type="text"
+                  placeholder="Filtrer..."
+                  value={cloudSearch}
+                  onChange={e => setCloudSearch(e.target.value)}
+                  className="w-24 md:w-32 py-1 px-2 text-[10px] bg-surf2 border border-border rounded-md focus:outline-none focus:border-gold/50 transition-all text-text"
+                />
+                {cloudSearch && (
+                  <button 
+                    onClick={() => setCloudSearch('')}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 text-text-dark hover:text-text"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={fetchCloudReports}
+                disabled={loadingCloud}
+                className="p-1.5 text-text-dark hover:text-gold rounded-lg hover:bg-gold/10 transition-colors disabled:opacity-50"
+                title="Rafraîchir"
+              >
+                <RefreshCw size={13} className={loadingCloud ? 'animate-spin' : ''} />
+              </button>
+            </div>
           </div>
 
           {cloudError && (
@@ -342,12 +362,13 @@ export function ImportTab({
           ) : (() => {
             // Filtrage appliqué
             const filtered = cloudReports.filter(r => {
-              if (showAllCloud || !activeHotel) return true;
-              const match = hotelMatchesReport(activeHotel.name, r.establishment_name);
-              if (!match && cloudReports.length > 0 && !showAllCloud) {
-                logger.debug('ImportTab', `Filtrage rapport: No match entre "${activeHotel.name}" et "${r.establishment_name}"`);
-              }
-              return match;
+              const nameMatch = showAllCloud || !activeHotel || hotelMatchesReport(activeHotel.name, r.establishment_name);
+              const searchMatch = !cloudSearch || 
+                r.establishment_name?.toLowerCase().includes(cloudSearch.toLowerCase()) ||
+                r.period_str?.toLowerCase().includes(cloudSearch.toLowerCase()) ||
+                r.filename?.toLowerCase().includes(cloudSearch.toLowerCase());
+              
+              return nameMatch && searchMatch;
             });
 
             if (filtered.length === 0) {
