@@ -12,7 +12,7 @@ import { downloadBlob } from '../utils/helpers';
 
 interface SettingsTabProps {
   config: AppConfig;
-  activeHotel: HotelConfig;
+  activeHotel: HotelConfig | null;
   onConfigChange: (c: AppConfig) => void;
   onUpdateHotel: (updates: Partial<HotelConfig>) => void;
   onAddHotel: (h: HotelConfig) => void;
@@ -36,6 +36,7 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
   };
 
   const updateType = (idx: number, field: keyof RoomType, val: any) => {
+    if (!activeHotel) return;
     const types = [...activeHotel.types];
     types[idx] = { ...types[idx], [field]: val };
     const totalCapacity = types.reduce((s, t) => s + (Number(t.capacity) || 0), 0);
@@ -43,11 +44,13 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
   };
 
   const removeType = (idx: number) => {
+    if (!activeHotel) return;
     const types = activeHotel.types.filter((_, i) => i !== idx);
     onUpdateHotel({ types, totalCapacity: types.reduce((s, t) => s + t.capacity, 0) });
   };
 
   const addType = () => {
+    if (!activeHotel) return;
     onUpdateHotel({ types: [...activeHotel.types, { code: '', label: '', description: '', capacity: 0 }] });
   };
 
@@ -65,6 +68,7 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
   };
 
   const scanCategories = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!activeHotel) return;
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -144,6 +148,7 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
   };
 
   const handleRegisterHotel = async () => {
+    if (!activeHotel) return;
     setRegisteringHotel(true)
     try {
       await registerHotel(activeHotel)
@@ -247,9 +252,20 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
 
         {/* Config panels */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Identity */}
-            <div className="bg-surf1 p-6 rounded-2xl border border-border">
+          {!activeHotel ? (
+            <div className="bg-surf1 p-12 rounded-2xl border border-border text-center flex flex-col items-center justify-center h-full min-h-[300px]">
+              <div className="w-16 h-16 bg-gold/10 text-gold rounded-full flex items-center justify-center mb-4">
+                <LayoutDashboard size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-text mb-2">Mode Global Actif</h3>
+              <p className="text-sm text-text-dim max-w-sm">
+                Sélectionnez un établissement spécifique dans la liste à gauche ou désactivez le mode global en haut pour modifier son identité, ses préfixes ou sa configuration Cloud.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Identity */}
+              <div className="bg-surf1 p-6 rounded-2xl border border-border">
               <div className="flex items-center gap-2 text-gold font-serif text-lg mb-6"><LayoutDashboard size={20} /> Identité</div>
               <div className="space-y-4">
                 <Field label="Nom" value={activeHotel.name} onChange={v => onUpdateHotel({ name: v })} />
@@ -494,6 +510,8 @@ export function SettingsTab({ config, activeHotel, onConfigChange, onUpdateHotel
               )}
             </div>
           </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
