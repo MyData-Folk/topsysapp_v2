@@ -159,6 +159,11 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
         Object.values(d.rooms).some(r => r.occupied > 0 || r.libres > 0)
       );
 
+      // Calcul du taux global moyen sur la période du snapshot
+      const totalOcc = s.days.reduce((acc, d) => acc + (d.occupied_total || 0), 0);
+      const totalCap = s.days.reduce((acc, d) => acc + (d.capacity_total || 0), 0);
+      const tauxGlobal = totalCap > 0 ? Math.round((totalOcc / totalCap) * 1000) / 10 : 0;
+
       return {
         ...s,
         minD,
@@ -726,7 +731,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
               <TrendingUp size={12} className="text-gold" /> Taux d'occupation moyen par snapshot
             </h3>
             <div className="h-[260px] min-w-[420px] relative">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1} debounce={50}>
                 <BarChart data={avgRateChart} barCategoryGap="30%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false}
@@ -752,7 +757,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast, state, onStateC
               <TrendingUp size={12} className="text-blue" /> Taux journalier par snapshot (superposition)
             </h3>
             <div className="h-[280px] min-w-[500px] relative">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1} debounce={50}>
                 <LineChart data={dailyChart}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
                   <XAxis dataKey="date" axisLine={false} tickLine={false}
