@@ -305,6 +305,7 @@ export default function App() {
                 <motion.div key="cloud" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                   <CloudTab
                     auth={auth}
+                    hotel={store.activeHotel}
                     activeReport={store.activeReport}
                     onAddReport={store.addReport}
                     onShowToast={store.showToast}

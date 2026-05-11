@@ -443,7 +443,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
               <TrendingUp size={12} className="text-gold" /> Taux d'occupation moyen par snapshot
             </h3>
             <div className="h-[260px] min-w-[420px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <BarChart data={avgRateChart} barCategoryGap="30%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false}
@@ -469,7 +469,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
               <TrendingUp size={12} className="text-blue" /> Taux journalier par snapshot (superposition)
             </h3>
             <div className="h-[280px] min-w-[500px]">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <LineChart data={dailyChart}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
                   <XAxis dataKey="date" axisLine={false} tickLine={false}
@@ -517,7 +517,7 @@ export function EvolutionTab({ config, hotel, auth, onShowToast }: EvolutionTabP
                 Positif = des chambres supplémentaires ont été réservées · Négatif = des annulations
               </p>
               <div className="h-[240px] min-w-[500px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <BarChart data={deltaChart} barCategoryGap="20%">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" vertical={false} />
                     <ReferenceLine y={0} stroke="var(--theme-border)" strokeWidth={1.5} />
